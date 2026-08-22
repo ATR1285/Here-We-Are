@@ -1,0 +1,3 @@
+CREATE DATABASE dayflow;  
+CREATE USER dayflow_app WITH ENCRYPTED PASSWORD 'dayflow_dev_123';  
+GRANT ALL PRIVILEGES ON DATABASE dayflow TO dayflow_app;  
