@@ -38,7 +38,7 @@ const Components = {
             const sidebarName = document.getElementById('sidebar-user-name');
             const sidebarAvatar = document.getElementById('sidebar-avatar-img');
             
-            if (sidebarName) sidebarName.innerText = user.name;
+            if (sidebarName) sidebarName.innerText = user.email || 'Employee';
             if (sidebarAvatar && user.avatar) sidebarAvatar.src = user.avatar;
 
             // Sidebar Logout
@@ -58,7 +58,7 @@ const Components = {
         const topbarName = document.getElementById('topbar-user-name');
         const topbarAvatar = document.getElementById('topbar-avatar-img');
         
-        if (topbarName) topbarName.innerText = user.name;
+        if (topbarName) topbarName.innerText = user.email || 'Employee';
         if (topbarAvatar && user.avatar) topbarAvatar.src = user.avatar;
 
         // Profile Trigger Dropdown

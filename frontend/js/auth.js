@@ -8,7 +8,7 @@ const Auth = {
     // Sign in validation
     async signIn(email, password) {
         const res = await Api.post('/auth/login', {
-            username: email,
+            email: email,
             password: password
         });
 
