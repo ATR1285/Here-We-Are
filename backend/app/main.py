@@ -33,4 +33,16 @@ app.include_router(expense.router, prefix=f"{settings.API_V1_STR}/expense", tags
 
 @app.get("/")
 def root():
-    return {"message": f"Welcome to {settings.PROJECT_NAME} API"}
+    # If the frontend is mounted at root, this get("/") will be shadowed by StaticFiles if mounted at "/",
+    # BUT FastAPI prioritizes routes. To serve the index.html from root:
+    from fastapi.responses import FileResponse
+    import os
+    frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+    return FileResponse(os.path.join(frontend_dir, "index.html"))
+
+# Mount frontend static files
+import os
+from fastapi.staticfiles import StaticFiles
+frontend_dir = os.path.join(os.path.dirname(__file__), "..", "..", "frontend")
+if os.path.exists(frontend_dir):
+    app.mount("/", StaticFiles(directory=frontend_dir, html=True), name="frontend")

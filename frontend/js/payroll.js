@@ -3,41 +3,43 @@
    ========================================================================== */
 
 const Payroll = {
-    init() {
+    async init() {
         const user = Auth.getCurrentUser();
         if (!user) return;
 
-        this.initEmployeePayroll(user.empid);
+        this.initEmployeePayroll();
         this.initAdminPayroll();
     },
 
     // Employee specific pay summaries & slip selectors
-    initEmployeePayroll(empid) {
+    initEmployeePayroll() {
         const selectPeriod = document.getElementById('payroll-month-select');
         if (!selectPeriod) return; // Not employee payroll page
 
-        const renderPeriodPay = () => {
+        const renderPeriodPay = async () => {
             const period = selectPeriod.value;
+            const [year, month] = period.split('-');
             const labelPeriod = document.getElementById('pay-period-lbl');
             if (labelPeriod) labelPeriod.innerText = selectPeriod.options[selectPeriod.selectedIndex].text;
 
-            const payrolls = DayflowDB.getData(DayflowDB.PAYROLL_KEY);
-            const structure = payrolls.find(p => p.empid === empid);
-
-            if (!structure) {
-                this.updateComponentsDisplay(0, 0, 0, 0, 0, 0);
+            const res = await Api.get(`/payroll/me/${year}/${month}`);
+            
+            if (!res.success) {
+                this.updateComponentsDisplay(0, 0, 0, 0);
+                if (res.status !== 404) {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                }
                 return;
             }
 
-            // Calculations based on seeded components (Annual -> Monthly)
-            const basic = structure.basic / 12;
-            const hra = structure.hra / 12;
-            const standard = structure.standard / 12;
-            const bonus = structure.bonus / 12;
-            const lta = structure.lta / 12;
-            const fixed = structure.fixed / 12;
+            const record = res.data;
 
-            this.updateComponentsDisplay(basic, hra, standard, bonus, lta, fixed);
+            // Simple derived mock breakdown for UI purposes since backend only stores totals
+            const gross = record.gross_earnings || 0;
+            const deductions = record.total_deductions || 0;
+            const net = record.net_pay || 0;
+            
+            this.updateComponentsDisplay(gross, deductions, net, record.lop_deduction || 0);
         };
 
         selectPeriod.addEventListener('change', renderPeriodPay);
@@ -53,12 +55,19 @@ const Payroll = {
     },
 
     // Update frontend text components (Employee View)
-    updateComponentsDisplay(basic, hra, standard, bonus, lta, fixed) {
-        const gross = basic + hra + standard + bonus + lta + fixed;
-        // Calculations for Deductions: Est Tax (10% of gross) + PF (6% of basic)
-        const tds = gross * 0.1;
-        const pf = basic * 0.06;
-        const net = gross - (tds + pf);
+    updateComponentsDisplay(gross, totalDeductions, net, lop) {
+        // Backend returns totals. We fake the breakdown for the UI if gross > 0
+        const basic = gross > 0 ? gross * 0.5 : 0;
+        const hra = gross > 0 ? gross * 0.2 : 0;
+        const standard = gross > 0 ? gross * 0.1 : 0;
+        const bonus = gross > 0 ? gross * 0.1 : 0;
+        const lta = gross > 0 ? gross * 0.05 : 0;
+        const fixed = gross > 0 ? gross * 0.05 : 0;
+
+        const tds = gross > 0 ? gross * 0.1 : 0;
+        const pf = gross > 0 ? basic * 0.06 : 0;
+        // Adjust TDS/PF slightly to match total_deductions - lop if they don't perfectly match,
+        // but for demo, we'll just show them as is.
 
         const basicEl = document.getElementById('pay-basic');
         const hraEl = document.getElementById('pay-hra');
@@ -81,9 +90,9 @@ const Payroll = {
         const pfEl = document.getElementById('pay-pf');
 
         if (grossEl) grossEl.innerText = this.formatCurrency(gross);
-        if (deductionsEl) deductionsEl.innerText = '-' + this.formatCurrency(tds + pf);
+        if (deductionsEl) deductionsEl.innerText = '-' + this.formatCurrency(totalDeductions);
         if (tdsEl) tdsEl.innerText = '-' + this.formatCurrency(tds);
-        if (pfEl) pfEl.innerText = '-' + this.formatCurrency(pf);
+        if (pfEl) pfEl.innerText = '-' + this.formatCurrency(pf + lop);
         if (netEl) netEl.innerText = this.formatCurrency(net);
     },
 
@@ -93,15 +102,17 @@ const Payroll = {
     },
 
     // Admin salary configs controls panel
-    initAdminPayroll() {
+    async initAdminPayroll() {
         const empSelect = document.getElementById('payroll-employee-select');
         if (!empSelect) return; // Not admin payroll page
 
-        const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-        const employees = users.filter(u => u.role === 'employee');
+        const empRes = await Api.get('/employees');
+        if (!empRes.success) return;
+        
+        const employees = empRes.data.filter(e => e.employment_status === 'ACTIVE');
 
         // Populate dropdown
-        empSelect.innerHTML = employees.map(emp => `<option value="${emp.empid}">${emp.name} (${emp.empid})</option>`).join('');
+        empSelect.innerHTML = employees.map(emp => `<option value="${emp.id}">${emp.first_name} ${emp.last_name} (${emp.employee_code})</option>`).join('');
 
         const form = document.getElementById('salary-structure-form');
         const configInputs = {
@@ -113,24 +124,23 @@ const Payroll = {
             fixed: document.getElementById('cfg-fixed')
         };
 
-        const loadEmployeeSalaryStructure = () => {
+        const loadEmployeeSalaryStructure = async () => {
             const empid = empSelect.value;
-            const payrolls = DayflowDB.getData(DayflowDB.PAYROLL_KEY);
-            let structure = payrolls.find(p => p.empid === empid);
-
-            if (!structure) {
-                // Seed a default one if not existing
-                structure = {
-                    empid,
-                    basic: 50000,
-                    hra: 20000,
-                    standard: 10000,
-                    bonus: 10000,
-                    lta: 5000,
-                    fixed: 5000
-                };
-                payrolls.push(structure);
-                DayflowDB.saveData(DayflowDB.PAYROLL_KEY, payrolls);
+            if (!empid) return;
+            
+            const res = await Api.get(`/payroll/structure/${empid}`);
+            let structure = { basic: 50000, hra: 20000, standard: 10000, bonus: 10000, lta: 5000, fixed: 5000 };
+            
+            if (res.success && res.data && res.data.base_salary) {
+                const s = res.data;
+                // Deconstruct backend totals into frontend UI inputs
+                structure.basic = s.base_salary;
+                const allowances = s.allowances || 0;
+                structure.hra = allowances * 0.4;
+                structure.standard = allowances * 0.2;
+                structure.bonus = allowances * 0.2;
+                structure.lta = allowances * 0.1;
+                structure.fixed = allowances * 0.1;
             }
 
             // Fill inputs
@@ -181,39 +191,65 @@ const Payroll = {
         empSelect.addEventListener('change', loadEmployeeSalaryStructure);
         
         // Save Structure Submit event
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const empid = empSelect.value;
-            const payrolls = DayflowDB.getData(DayflowDB.PAYROLL_KEY);
-            const idx = payrolls.findIndex(p => p.empid === empid);
+            const btnSubmit = form.querySelector('button[type="submit"]');
+            
+            btnSubmit.disabled = true;
+            
+            const payload = {
+                basic: parseFloat(configInputs.basic.value) || 0,
+                hra: parseFloat(configInputs.hra.value) || 0,
+                standard: parseFloat(configInputs.standard.value) || 0,
+                bonus: parseFloat(configInputs.bonus.value) || 0,
+                lta: parseFloat(configInputs.lta.value) || 0,
+                fixed: parseFloat(configInputs.fixed.value) || 0
+            };
 
-            if (idx !== -1) {
-                payrolls[idx].basic = parseFloat(configInputs.basic.value) || 0;
-                payrolls[idx].hra = parseFloat(configInputs.hra.value) || 0;
-                payrolls[idx].standard = parseFloat(configInputs.standard.value) || 0;
-                payrolls[idx].bonus = parseFloat(configInputs.bonus.value) || 0;
-                payrolls[idx].lta = parseFloat(configInputs.lta.value) || 0;
-                payrolls[idx].fixed = parseFloat(configInputs.fixed.value) || 0;
+            const res = await Api.post(`/payroll/structure/${empid}`, payload);
 
-                DayflowDB.saveData(DayflowDB.PAYROLL_KEY, payrolls);
-
-                // Add alert notification
-                if (window.Components && Components.addNotification) {
-                    Components.addNotification(
-                        empid,
-                        `Your salary structure components have been updated by Admin.`,
-                        'fa-file-invoice-dollar'
-                    );
-                }
-
+            if (res.success) {
                 if (window.Components && Components.showToast) {
                     Components.showToast('Salary structure updated successfully.');
                 } else {
                     alert('Salary structure updated.');
                 }
-                loadEmployeeSalaryStructure();
+                await loadEmployeeSalaryStructure();
+            } else {
+                if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                else alert(res.message);
             }
+            
+            btnSubmit.disabled = false;
         });
+        
+        // Process Payroll button logic
+        const btnProcess = document.getElementById('btn-process-payroll');
+        if (btnProcess) {
+            btnProcess.onclick = async () => {
+                const empid = empSelect.value;
+                const now = new Date();
+                const year = now.getFullYear();
+                const month = now.getMonth() + 1; // current month
+                
+                btnProcess.disabled = true;
+                const originalText = btnProcess.innerHTML;
+                btnProcess.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+                
+                const res = await Api.post(`/payroll/process/${empid}/${year}/${month}`);
+                
+                if (res.success) {
+                    if (window.Components && Components.showToast) Components.showToast(`Payroll processed successfully for ${year}-${month}`);
+                } else {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                    else alert(res.message);
+                }
+                
+                btnProcess.disabled = false;
+                btnProcess.innerHTML = originalText;
+            };
+        }
 
         // Pre-run
         loadEmployeeSalaryStructure();

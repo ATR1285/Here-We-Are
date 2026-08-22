@@ -3,19 +3,23 @@
    ========================================================================== */
 
 const Dashboard = {
-    init() {
+    async init() {
         this.updateClock();
         setInterval(() => this.updateClock(), 1000);
         
         const user = Auth.getCurrentUser();
         if (!user) return;
 
-        this.setGreeting(user.name);
+        // Ensure user obj has the right properties (mapping from backend schema to UI)
+        const name = user.first_name ? `${user.first_name} ${user.last_name}` : user.name;
+        const role = user.role && user.role.name ? user.role.name.toLowerCase() : (user.role || 'employee');
+        
+        this.setGreeting(name);
 
-        if (user.role === 'employee') {
-            this.loadEmployeeDashboard(user.empid);
+        if (role === 'employee' || role === 'manager') {
+            await this.loadEmployeeDashboard(user.id);
         } else {
-            this.loadAdminDashboard();
+            await this.loadAdminDashboard();
         }
     },
 
@@ -44,59 +48,77 @@ const Dashboard = {
     },
 
     // Loading Employee specific dashboard counters
-    loadEmployeeDashboard(empid) {
-        const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-        const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
+    async loadEmployeeDashboard(userId) {
+        let myAtt = [];
+        let myLeaves = [];
 
-        // Filter active employee attendance (August 2026)
-        const myAtt = attendance.filter(a => a.empid === empid && a.date.startsWith('2026-08'));
-        const presentCount = myAtt.filter(a => a.status === 'present').length;
-        const halfdayCount = myAtt.filter(a => a.status === 'half-day').length;
+        // Fetch Attendance
+        const attRes = await Api.get('/attendance/me');
+        if (attRes.success) {
+            myAtt = attRes.data;
+        }
+
+        // Fetch Leaves
+        const leaveRes = await Api.get('/leave/me/requests');
+        if (leaveRes.success) {
+            myLeaves = leaveRes.data;
+        }
+
+        const now = new Date();
+        const monthPrefix = `${now.getFullYear()}-${now.getMonth() + 1 < 10 ? '0' : ''}${now.getMonth() + 1}`;
+
+        // Filter active employee attendance for current month
+        const myMonthAtt = myAtt.filter(a => a.attendance_date.startsWith(monthPrefix));
+        const presentCount = myMonthAtt.filter(a => a.status === 'PRESENT').length;
+        const halfdayCount = myMonthAtt.filter(a => a.status === 'HALF_DAY').length;
         
         const statPresent = document.getElementById('stat-present-days');
         if (statPresent) {
-            statPresent.innerText = `${presentCount + halfdayCount} days`;
+            statPresent.innerText = `${presentCount + (halfdayCount * 0.5)} days`;
         }
 
         // Pending Leave Count
-        const myPendingLeaves = leaves.filter(l => l.empid === empid && l.status === 'Pending').length;
+        const myPendingLeaves = myLeaves.filter(l => l.status === 'PENDING').length;
         const statLeaves = document.getElementById('stat-pending-leaves');
         if (statLeaves) {
             statLeaves.innerText = myPendingLeaves;
         }
 
         // Total hours worked counter
-        let totalHrs = 0;
-        myAtt.forEach(a => totalHrs += a.hours || 0);
+        let totalMins = 0;
+        myMonthAtt.forEach(a => totalMins += a.worked_minutes || 0);
         const statHours = document.getElementById('stat-work-hours');
         if (statHours) {
-            statHours.innerText = `${totalHrs.toFixed(1)}h`;
+            statHours.innerText = `${(totalMins / 60).toFixed(1)}h`;
         }
 
         // Load recent check-in/out history timeline logs
         const timeline = document.getElementById('activity-timeline');
         if (timeline) {
-            // Sort attendance newest first
-            const sortedAtt = [...myAtt].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 4);
+            // Sort attendance newest first (already sorted by API but just in case)
+            const sortedAtt = [...myAtt].slice(0, 4);
 
             if (sortedAtt.length === 0) {
                 timeline.innerHTML = '<p class="empty-state-text">No recent check-in/out logs.</p>';
             } else {
                 timeline.innerHTML = sortedAtt.map(a => {
                     let logs = [];
-                    if (a.checkIn) {
+                    const checkInFormat = a.check_in_at ? new Date(a.check_in_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+                    const checkOutFormat = a.check_out_at ? new Date(a.check_out_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+
+                    if (a.check_in_at) {
                         logs.push(`
                             <div class="timeline-item checkin">
-                                <span class="timeline-time">${a.date} &bull; ${a.checkIn}</span>
-                                <p class="timeline-desc">Checked In successfully (Status: <strong class="${a.status === 'present' ? 'present-color' : 'half-day-color'}">${a.status}</strong>)</p>
+                                <span class="timeline-time">${a.attendance_date} &bull; ${checkInFormat}</span>
+                                <p class="timeline-desc">Checked In successfully (Status: <strong class="${a.status === 'PRESENT' ? 'present-color' : 'half-day-color'}">${a.status}</strong>)</p>
                             </div>
                         `);
                     }
-                    if (a.checkOut) {
+                    if (a.check_out_at) {
                         logs.push(`
                             <div class="timeline-item checkout">
-                                <span class="timeline-time">${a.date} &bull; ${a.checkOut}</span>
-                                <p class="timeline-desc">Checked Out successfully (${a.hours.toFixed(2)} hours logged)</p>
+                                <span class="timeline-time">${a.attendance_date} &bull; ${checkOutFormat}</span>
+                                <p class="timeline-desc">Checked Out successfully (${((a.worked_minutes || 0) / 60).toFixed(2)} hours logged)</p>
                             </div>
                         `);
                     }
@@ -107,12 +129,20 @@ const Dashboard = {
     },
 
     // Loading Admin/HR dashboard widgets and logs checklist
-    loadAdminDashboard() {
-        const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-        const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-        const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
+    async loadAdminDashboard() {
+        let employees = [];
+        let allAtt = [];
+        let allLeaves = [];
 
-        const employees = users.filter(u => u.role === 'employee');
+        const [empRes, attRes, leaveRes] = await Promise.all([
+            Api.get('/employees'),
+            Api.get('/attendance'),
+            Api.get('/leave/requests')
+        ]);
+
+        if (empRes.success) employees = empRes.data.filter(e => e.employment_status === 'ACTIVE');
+        if (attRes.success) allAtt = attRes.data;
+        if (leaveRes.success) allLeaves = leaveRes.data;
 
         // Stat 1: Total Employees
         const totalEmpEl = document.getElementById('stat-total-emp');
@@ -122,13 +152,13 @@ const Dashboard = {
         const todayDate = new Date().toISOString().split('T')[0];
 
         // Stat 2: Present Today
-        const todayAtt = attendance.filter(a => a.date === todayDate);
-        const presentToday = todayAtt.filter(a => a.status === 'present' || a.status === 'half-day').length;
+        const todayAtt = allAtt.filter(a => a.attendance_date === todayDate);
+        const presentToday = todayAtt.filter(a => a.status === 'PRESENT' || a.status === 'HALF_DAY').length;
         const presentTodayEl = document.getElementById('stat-present-today');
         if (presentTodayEl) presentTodayEl.innerText = presentToday;
 
         // Stat 3: Pending Leaves
-        const pendingLeaves = leaves.filter(l => l.status === 'Pending');
+        const pendingLeaves = allLeaves.filter(l => l.status === 'PENDING');
         const pendingLeavesEl = document.getElementById('stat-leaves-pending');
         if (pendingLeavesEl) pendingLeavesEl.innerText = pendingLeaves.length;
 
@@ -136,11 +166,11 @@ const Dashboard = {
         const tbody = document.getElementById('admin-emp-overview-tbody');
         if (tbody) {
             tbody.innerHTML = employees.map(emp => {
-                const todayRecord = todayAtt.find(a => a.empid === emp.empid);
+                const todayRecord = todayAtt.find(a => a.employee_id === emp.id);
                 let statusBadge = `<span class="status-badge off">No Record</span>`;
                 
                 if (todayRecord) {
-                    statusBadge = `<span class="status-badge ${todayRecord.status}">${todayRecord.status}</span>`;
+                    statusBadge = `<span class="status-badge ${todayRecord.status.toLowerCase()}">${todayRecord.status}</span>`;
                 }
 
                 return `
@@ -148,15 +178,15 @@ const Dashboard = {
                         <td>
                             <div class="directory-table-user-cell">
                                 <div class="user-avatar-mini">
-                                    <img src="${emp.avatar || '../assets/avatar-placeholder.svg'}" alt="${emp.name}">
+                                    <img src="${emp.avatar || '../assets/avatar-placeholder.svg'}" alt="${emp.first_name}">
                                 </div>
-                                <strong>${emp.name}</strong>
+                                <strong>${emp.first_name} ${emp.last_name}</strong>
                             </div>
                         </td>
-                        <td>${emp.designation}</td>
+                        <td>${emp.employee_code}</td>
                         <td>${statusBadge}</td>
                         <td>
-                            <button class="btn btn-secondary btn-xs btn-switch-quick" data-empid="${emp.empid}">
+                            <button class="btn btn-secondary btn-xs btn-switch-quick" data-empid="${emp.employee_code}">
                                 <i class="fa-solid fa-right-to-bracket"></i> Switch View
                             </button>
                         </td>
@@ -164,15 +194,10 @@ const Dashboard = {
                 `;
             }).join('');
 
-            // Bind click switches view
+            // Bind click switches view - This is tricky since it's a mock UI feature, but we can fake it by storing in sessionStorage as a hint.
             tbody.querySelectorAll('.btn-switch-quick').forEach(btn => {
                 btn.onclick = () => {
-                    const empid = btn.getAttribute('data-empid');
-                    const selectedEmp = employees.find(emp => emp.empid === empid);
-                    if (selectedEmp) {
-                        sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(selectedEmp));
-                        window.location.href = '../employee/dashboard.html';
-                    }
+                    alert('Switch view requires proper impersonation token from backend. Currently disabled for security.');
                 };
             });
         }
@@ -184,35 +209,41 @@ const Dashboard = {
                 quickLeavesList.innerHTML = '<p class="empty-state-text">No pending leave requests.</p>';
             } else {
                 // Show latest 3 pending requests
-                quickLeavesList.innerHTML = pendingLeaves.slice(0, 3).map(l => `
-                    <div class="quick-leave-card">
-                        <div class="q-leave-header">
-                            <strong class="q-leave-user">${l.name} (${l.empid})</strong>
-                            <span class="q-leave-date">Applied: ${l.appliedOn}</span>
+                quickLeavesList.innerHTML = pendingLeaves.slice(0, 3).map(l => {
+                    const empName = l.employee ? `${l.employee.first_name} ${l.employee.last_name}` : 'Unknown';
+                    const empCode = l.employee ? l.employee.employee_code : '';
+                    const typeName = l.leave_type ? l.leave_type.name : 'Leave';
+                    
+                    return `
+                        <div class="quick-leave-card">
+                            <div class="q-leave-header">
+                                <strong class="q-leave-user">${empName} (${empCode})</strong>
+                                <span class="q-leave-date">Applied: ${new Date(l.created_at).toISOString().split('T')[0]}</span>
+                            </div>
+                            <div class="q-leave-details">
+                                <p><strong>Type:</strong> ${typeName} &bull; <strong>Duration:</strong> ${l.start_date} to ${l.end_date} (${l.requested_days} days)</p>
+                                <p class="text-muted" style="margin-top: 4px;">"${l.reason}"</p>
+                            </div>
+                            <div class="q-leave-actions">
+                                <button class="btn btn-danger btn-xs btn-quick-reject" data-id="${l.id}">Reject</button>
+                                <button class="btn btn-success btn-xs btn-quick-approve" data-id="${l.id}">Approve</button>
+                            </div>
                         </div>
-                        <div class="q-leave-details">
-                            <p><strong>Type:</strong> ${l.type} Leave &bull; <strong>Duration:</strong> ${l.start} to ${l.end} (${l.days} days)</p>
-                            <p class="text-muted" style="margin-top: 4px;">"${l.remarks}"</p>
-                        </div>
-                        <div class="q-leave-actions">
-                            <button class="btn btn-danger btn-xs btn-quick-reject" data-id="${l.id}">Reject</button>
-                            <button class="btn btn-success btn-xs btn-quick-approve" data-id="${l.id}">Approve</button>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 // Bind approval quick triggers
                 quickLeavesList.querySelectorAll('.btn-quick-approve').forEach(btn => {
                     btn.onclick = () => {
                         const leaveId = btn.getAttribute('data-id');
-                        this.processQuickLeave(leaveId, 'Approved');
+                        this.processQuickLeave(leaveId, 'approve');
                     };
                 });
 
                 quickLeavesList.querySelectorAll('.btn-quick-reject').forEach(btn => {
                     btn.onclick = () => {
                         const leaveId = btn.getAttribute('data-id');
-                        this.processQuickLeave(leaveId, 'Rejected');
+                        this.processQuickLeave(leaveId, 'reject');
                     };
                 });
             }
@@ -220,31 +251,18 @@ const Dashboard = {
     },
 
     // Process Quick Leave status action from Dashboard
-    processQuickLeave(id, status) {
-        const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
-        const reqIndex = leaves.findIndex(l => l.id === id);
-
-        if (reqIndex !== -1) {
-            leaves[reqIndex].status = status;
-            leaves[reqIndex].comments = `${status} via quick admin action.`;
-            DayflowDB.saveData(DayflowDB.LEAVES_KEY, leaves);
-            
-            // Send in-app alert notification
-            if (window.Components && Components.addNotification) {
-                Components.addNotification(
-                    leaves[reqIndex].empid, 
-                    `Your leave request for ${leaves[reqIndex].start} has been ${status}.`,
-                    status === 'Approved' ? 'fa-circle-check' : 'fa-circle-xmark'
-                );
-            }
-
+    async processQuickLeave(id, action) {
+        const comments = `${action}d via quick admin action on dashboard.`;
+        const res = await Api.post(`/leave/${id}/${action}`, { comments });
+        
+        if (res.success) {
             if (window.Components && Components.showToast) {
-                Components.showToast(`Leave request ${status} successfully.`);
-            } else {
-                alert(`Leave request ${status}.`);
+                Components.showToast(`Leave request ${action}d successfully.`);
             }
-
-            this.loadAdminDashboard();
+            await this.loadAdminDashboard();
+        } else {
+            if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+            else alert(res.message);
         }
     }
 };

@@ -3,15 +3,22 @@
    ========================================================================== */
 
 const Profile = {
-    init() {
+    async init() {
         const user = Auth.getCurrentUser();
         if (!user) return;
 
+        // Fetch fresh 360 profile from backend
+        let profileUser = user;
+        const res = await Api.get('/employees/me');
+        if (res.success && res.data) {
+            profileUser = res.data;
+        }
+
         this.initTabs();
-        this.loadProfileDetails(user);
-        this.initEditProfile(user);
-        this.initSkillsAndCerts(user);
-        this.initDocuments(user);
+        this.loadProfileDetails(profileUser);
+        this.initEditProfile(profileUser);
+        this.initSkillsAndCerts(profileUser);
+        this.initDocuments(profileUser);
         
         // Admin: Add Employee Form Binder
         this.initAddEmployeeForm();
@@ -44,11 +51,11 @@ const Profile = {
         const empidEl = document.getElementById('profile-empid');
         const mainAvatar = document.getElementById('profile-main-avatar');
 
-        if (fullnameEl) fullnameEl.innerText = user.name;
-        if (designationEl) designationEl.innerText = user.designation;
-        if (deptEl) deptEl.innerText = user.dept;
-        if (empidEl) empidEl.innerText = user.empid;
-        if (mainAvatar && user.avatar) mainAvatar.src = user.avatar;
+        if (fullnameEl) fullnameEl.innerText = `${user.first_name} ${user.last_name}`;
+        if (designationEl) designationEl.innerText = user.job_position ? user.job_position.title : 'Employee';
+        if (deptEl) deptEl.innerText = user.department ? user.department.name : 'Unassigned';
+        if (empidEl) empidEl.innerText = user.employee_code;
+        if (mainAvatar && user.avatar) mainAvatar.src = user.avatar; // Avatar handling might need real backend field later
 
         // Input Fields (Personal tab)
         const phoneInput = document.getElementById('prof-phone');
@@ -61,17 +68,20 @@ const Profile = {
         if (emailInput) emailInput.value = user.email || '';
         if (addressTextarea) addressTextarea.value = user.address || '';
         
-        if (dobEl && user.dob) {
-            dobEl.innerText = new Date(user.dob).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        if (dobEl && user.date_of_birth) {
+            dobEl.innerText = new Date(user.date_of_birth).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+        } else if (dobEl) {
+            dobEl.innerText = 'Not specified';
         }
+
         if (genderEl) genderEl.innerText = user.gender || 'Not specified';
 
         // Static Info (Job tab)
         const managerEl = document.getElementById('job-manager');
         const joiningEl = document.getElementById('job-joining');
-        if (managerEl) managerEl.innerText = user.role === 'hr' ? 'Board of Directors' : 'Priya Mehta (HR Director)';
-        if (joiningEl && user.joiningDate) {
-            joiningEl.innerText = new Date(user.joiningDate).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
+        if (managerEl) managerEl.innerText = user.manager_id ? user.manager_id : 'Self'; // Should fetch manager name ideally
+        if (joiningEl && user.hire_date) {
+            joiningEl.innerText = new Date(user.hire_date).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' });
         }
 
         // About Wireframe Textareas (Section 2)
@@ -79,8 +89,8 @@ const Profile = {
         const loveJobText = document.getElementById('loveJob-textarea');
         const hobbiesText = document.getElementById('hobbies-textarea');
 
-        if (aboutMeText) aboutMeText.value = user.aboutMe || 'Introduce yourself here...';
-        if (loveJobText) loveJobText.value = user.loveJob || 'Write what keeps you motivated...';
+        if (aboutMeText) aboutMeText.value = user.about_me || 'Introduce yourself here...';
+        if (loveJobText) loveJobText.value = user.love_job || 'Write what keeps you motivated...';
         if (hobbiesText) hobbiesText.value = user.hobbies || 'Share some hobbies...';
     },
 
@@ -92,7 +102,6 @@ const Profile = {
 
         const inputs = [
             document.getElementById('prof-phone'),
-            document.getElementById('prof-email'),
             document.getElementById('prof-address')
         ];
 
@@ -111,21 +120,19 @@ const Profile = {
                 this.loadProfileDetails(user); // Reset fields
             };
 
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                const idx = users.findIndex(u => u.empid === user.empid);
+                const btnSave = form.querySelector('button[type="submit"]');
+                btnSave.disabled = true;
 
-                if (idx !== -1) {
-                    users[idx].phone = document.getElementById('prof-phone').value.trim();
-                    users[idx].email = document.getElementById('prof-email').value.trim();
-                    users[idx].address = document.getElementById('prof-address').value.trim();
+                const payload = {
+                    phone: document.getElementById('prof-phone').value.trim(),
+                    address: document.getElementById('prof-address').value.trim()
+                };
 
-                    DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                    
-                    // Update session
-                    sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[idx]));
+                const res = await Api.patch(`/employees/${user.id}/basic`, payload);
 
+                if (res.success) {
                     inputs.forEach(input => { if (input) input.disabled = true; });
                     actionsBox.classList.add('hidden');
                     toggleBtn.classList.remove('hidden');
@@ -133,12 +140,23 @@ const Profile = {
                     if (window.Components && Components.showToast) {
                         Components.showToast('Profile updated successfully.');
                     }
-                    this.loadProfileDetails(users[idx]);
+                    // Fetch fresh profile details
+                    const freshRes = await Api.get('/employees/me');
+                    if (freshRes.success) {
+                        this.loadProfileDetails(freshRes.data);
+                        user = freshRes.data;
+                    }
+                } else {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                    else alert(res.message);
                 }
+                
+                btnSave.disabled = false;
             });
         }
 
-        // About panel field edits (Section 2 Excalidraw)
+        // About panel field edits - Not saving to backend yet (no schema fields)
+        // Kept purely for UI continuity
         document.querySelectorAll('.box-edit-icon').forEach(icon => {
             icon.onclick = () => {
                 const fieldId = icon.getAttribute('data-field');
@@ -153,75 +171,31 @@ const Profile = {
                         icon.className = 'fa-solid fa-check box-edit-icon';
                         icon.style.color = 'var(--success)';
                     } else {
-                        // Save Mode
-                        const val = textarea.value.trim();
-                        const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                        const idx = users.findIndex(u => u.empid === user.empid);
-
-                        if (idx !== -1) {
-                            users[idx][fieldId] = val;
-                            DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                            sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[idx]));
-                        }
-
+                        // Save Mode (UI only since backend lacks these fields)
                         textarea.disabled = true;
                         icon.className = 'fa-solid fa-pencil box-edit-icon';
                         icon.style.color = 'var(--text-muted)';
                         if (window.Components && Components.showToast) {
-                            Components.showToast('Section saved.');
+                            Components.showToast('Section saved (UI only).');
                         }
                     }
                 }
             };
         });
-
-        // Photo Upload simulation
-        const avatarUpload = document.getElementById('avatar-upload');
-        if (avatarUpload) {
-            avatarUpload.addEventListener('change', (e) => {
-                const file = e.target.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = (event) => {
-                        const base64 = event.target.result;
-                        const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                        const idx = users.findIndex(u => u.empid === user.empid);
-
-                        if (idx !== -1) {
-                            users[idx].avatar = base64;
-                            DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                            sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[idx]));
-                            
-                            // Re-populate avatars
-                            const mainAvatar = document.getElementById('profile-main-avatar');
-                            if (mainAvatar) mainAvatar.src = base64;
-
-                            const sidebarAvatar = document.getElementById('sidebar-avatar-img');
-                            const topbarAvatar = document.getElementById('topbar-avatar-img');
-                            if (sidebarAvatar) sidebarAvatar.src = base64;
-                            if (topbarAvatar) topbarAvatar.src = base64;
-
-                            if (window.Components && Components.showToast) {
-                                Components.showToast('Profile photo updated.');
-                            }
-                        }
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        }
     },
 
-    // Skills and certifications tag insertion logic
+    // Skills and certifications tag insertion logic (UI only for now)
     initSkillsAndCerts(user) {
+        // Backend lacks skills/certs tables in Phase 1-9 schema. Kept as UI-only array for demo.
+        let skills = ['JavaScript', 'React', 'FastAPI'];
+        let certs = ['AWS Certified Developer'];
+
         const skillsList = document.getElementById('profile-skills-list');
         const certsList = document.getElementById('profile-certs-list');
 
         if (!skillsList || !certsList) return;
 
         const renderSkills = () => {
-            const freshUser = Auth.getCurrentUser();
-            const skills = freshUser.skills || [];
             skillsList.innerHTML = skills.map((s, i) => `
                 <span class="skill-tag">${s} <i class="fa-solid fa-xmark btn-del-skill" data-idx="${i}"></i></span>
             `).join('');
@@ -229,22 +203,13 @@ const Profile = {
             skillsList.querySelectorAll('.btn-del-skill').forEach(btn => {
                 btn.onclick = () => {
                     const idx = parseInt(btn.getAttribute('data-idx'));
-                    const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                    const userIdx = users.findIndex(u => u.empid === freshUser.empid);
-                    
-                    if (userIdx !== -1) {
-                        users[userIdx].skills.splice(idx, 1);
-                        DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                        sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[userIdx]));
-                        renderSkills();
-                    }
+                    skills.splice(idx, 1);
+                    renderSkills();
                 };
             });
         };
 
         const renderCerts = () => {
-            const freshUser = Auth.getCurrentUser();
-            const certs = freshUser.certs || [];
             certsList.innerHTML = certs.map((c, i) => `
                 <div class="cert-item">
                     <span class="cert-name">${c}</span>
@@ -255,81 +220,19 @@ const Profile = {
             certsList.querySelectorAll('.btn-del-cert').forEach(btn => {
                 btn.onclick = () => {
                     const idx = parseInt(btn.getAttribute('data-idx'));
-                    const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                    const userIdx = users.findIndex(u => u.empid === freshUser.empid);
-                    
-                    if (userIdx !== -1) {
-                        users[userIdx].certs.splice(idx, 1);
-                        DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                        sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[userIdx]));
-                        renderCerts();
-                    }
+                    certs.splice(idx, 1);
+                    renderCerts();
                 };
             });
         };
 
         renderSkills();
         renderCerts();
-
-        // Skill Toggle add form
-        const btnAddSkill = document.getElementById('btn-add-skill');
-        const formSkill = document.getElementById('skill-form');
-        const inputSkill = document.getElementById('skill-input');
-        const btnSaveSkill = document.getElementById('btn-save-skill');
-
-        if (btnAddSkill && formSkill && inputSkill && btnSaveSkill) {
-            btnAddSkill.onclick = () => formSkill.classList.toggle('hidden');
-            btnSaveSkill.onclick = () => {
-                const val = inputSkill.value.trim();
-                if (!val) return;
-                
-                const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                const idx = users.findIndex(u => u.empid === user.empid);
-                if (idx !== -1) {
-                    if (!users[idx].skills) users[idx].skills = [];
-                    users[idx].skills.push(val);
-                    DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                    sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[idx]));
-                    
-                    inputSkill.value = '';
-                    formSkill.classList.add('hidden');
-                    renderSkills();
-                    if (window.Components && Components.showToast) Components.showToast('Skill added.');
-                }
-            };
-        }
-
-        // Cert Toggle Add form
-        const btnAddCert = document.getElementById('btn-add-cert');
-        const formCert = document.getElementById('cert-form');
-        const inputCert = document.getElementById('cert-input');
-        const btnSaveCert = document.getElementById('btn-save-cert');
-
-        if (btnAddCert && formCert && inputCert && btnSaveCert) {
-            btnAddCert.onclick = () => formCert.classList.toggle('hidden');
-            btnSaveCert.onclick = () => {
-                const val = inputCert.value.trim();
-                if (!val) return;
-
-                const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                const idx = users.findIndex(u => u.empid === user.empid);
-                if (idx !== -1) {
-                    if (!users[idx].certs) users[idx].certs = [];
-                    users[idx].certs.push(val);
-                    DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-                    sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(users[idx]));
-
-                    inputCert.value = '';
-                    formCert.classList.add('hidden');
-                    renderCerts();
-                    if (window.Components && Components.showToast) Components.showToast('Certification added.');
-                }
-            };
-        }
     },
 
-    // Official documents placeholder manager
+    // Official documents placeholder manager (UI Only)
     initDocuments(user) {
+        // Kept UI only since no document upload backend API exists
         const btnUpload = document.getElementById('btn-upload-doc');
         const modal = document.getElementById('upload-doc-modal');
         const closeBtn = document.getElementById('close-upload-modal');
@@ -369,22 +272,28 @@ const Profile = {
     },
 
     // Employee directory render (Admin side)
-    loadEmployeeDirectory() {
+    async loadEmployeeDirectory() {
         const tbody = document.getElementById('directory-tbody');
         if (!tbody) return;
 
-        const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-        const employees = users.filter(u => u.role === 'employee');
+        const res = await Api.get('/employees');
+        if (!res.success) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state-text">Unable to load employees.</td></tr>';
+            return;
+        }
+
+        const employees = res.data;
 
         const searchVal = document.getElementById('employee-search') ? document.getElementById('employee-search').value.toLowerCase() : '';
         const deptVal = document.getElementById('dept-filter') ? document.getElementById('dept-filter').value : '';
 
         // Filter search results
         const filtered = employees.filter(emp => {
-            const matchesSearch = emp.name.toLowerCase().includes(searchVal) || 
-                                  emp.empid.toLowerCase().includes(searchVal) || 
+            const matchesSearch = emp.first_name.toLowerCase().includes(searchVal) || 
+                                  emp.last_name.toLowerCase().includes(searchVal) || 
+                                  emp.employee_code.toLowerCase().includes(searchVal) || 
                                   emp.email.toLowerCase().includes(searchVal);
-            const matchesDept = !deptVal || emp.dept === deptVal;
+            const matchesDept = !deptVal || (emp.department_id && emp.department_id === deptVal);
 
             return matchesSearch && matchesDept;
         });
@@ -399,48 +308,40 @@ const Profile = {
                 <td>
                     <div class="directory-table-user-cell">
                         <div class="user-avatar-mini">
-                            <img src="${emp.avatar || '../assets/avatar-placeholder.svg'}" alt="${emp.name}">
+                            <img src="${emp.avatar || '../assets/avatar-placeholder.svg'}" alt="${emp.first_name}">
                         </div>
                         <div>
-                            <strong>${emp.name}</strong><br>
+                            <strong>${emp.first_name} ${emp.last_name}</strong><br>
                             <span class="text-muted" style="font-size:0.75rem">${emp.email}</span>
                         </div>
                     </div>
                 </td>
-                <td>${emp.empid}</td>
-                <td>${emp.dept}</td>
-                <td>${emp.designation}</td>
-                <td>${emp.joiningDate || 'N/A'}</td>
-                <td><span class="status-pill active-status">Active</span></td>
+                <td>${emp.employee_code}</td>
+                <td>${emp.department_id || '--'}</td>
+                <td>${emp.job_position_id || '--'}</td>
+                <td>${emp.hire_date || 'N/A'}</td>
+                <td><span class="status-pill active-status">${emp.employment_status}</span></td>
                 <td>
                     <div class="directory-actions-cell">
-                        <button class="btn btn-secondary btn-xs btn-switch-dir" data-empid="${emp.empid}">Switch View</button>
-                        <button class="btn btn-danger btn-xs btn-deactivate" data-empid="${emp.empid}">Deactivate</button>
+                        <button class="btn btn-danger btn-xs btn-deactivate" data-empid="${emp.id}">Deactivate</button>
                     </div>
                 </td>
             </tr>
         `).join('');
 
         // Bind quick actions
-        tbody.querySelectorAll('.btn-switch-dir').forEach(btn => {
-            btn.onclick = () => {
-                const empid = btn.getAttribute('data-empid');
-                const selectedEmp = employees.find(emp => emp.empid === empid);
-                if (selectedEmp) {
-                    sessionStorage.setItem(Auth.SESSION_USER_KEY, JSON.stringify(selectedEmp));
-                    window.location.href = '../employee/dashboard.html';
-                }
-            };
-        });
-
         tbody.querySelectorAll('.btn-deactivate').forEach(btn => {
-            btn.onclick = () => {
+            btn.onclick = async () => {
                 const empid = btn.getAttribute('data-empid');
-                if (confirm(`Are you sure you want to deactivate employee ${empid}?`)) {
-                    const freshUsers = users.filter(u => u.empid !== empid);
-                    DayflowDB.saveData(DayflowDB.USERS_KEY, freshUsers);
-                    if (window.Components && Components.showToast) Components.showToast('Employee deactivated successfully.');
-                    this.loadEmployeeDirectory();
+                if (confirm(`Are you sure you want to deactivate employee?`)) {
+                    const res = await Api.delete(`/employees/${empid}`);
+                    if (res.success) {
+                        if (window.Components && Components.showToast) Components.showToast('Employee deactivated successfully.');
+                        await this.loadEmployeeDirectory();
+                    } else {
+                        if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                        else alert(res.message);
+                    }
                 }
             };
         });
@@ -467,63 +368,37 @@ const Profile = {
             };
             closeBtn.onclick = () => modal.classList.remove('active');
 
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const empid = document.getElementById('new-empid').value.trim();
-                const name = document.getElementById('new-name').value.trim();
-                const email = document.getElementById('new-email').value.trim();
-                const role = document.getElementById('new-role').value;
-                const dept = document.getElementById('new-dept').value;
-                const designation = document.getElementById('new-designation').value.trim();
-                const joining = document.getElementById('new-joining').value;
-                const salary = parseFloat(document.getElementById('new-salary').value);
+                const btnSave = form.querySelector('button[type="submit"]');
+                btnSave.disabled = true;
 
-                const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-                if (users.some(u => u.empid.toLowerCase() === empid.toLowerCase())) {
-                    alert('Employee ID already exists.');
-                    return;
-                }
-
-                const newUser = {
-                    empid,
-                    name,
-                    email,
-                    password: 'password123', // Default hackathon pass
-                    role,
-                    dept,
-                    designation,
-                    joiningDate: joining,
-                    phone: '',
-                    dob: '',
-                    gender: '',
-                    address: '',
-                    aboutMe: '',
-                    loveJob: '',
-                    hobbies: '',
-                    skills: [],
-                    certs: []
+                const payload = {
+                    employee_code: document.getElementById('new-empid').value.trim(),
+                    first_name: document.getElementById('new-name').value.trim().split(' ')[0],
+                    last_name: document.getElementById('new-name').value.trim().split(' ').slice(1).join(' ') || 'User',
+                    email: document.getElementById('new-email').value.trim(),
+                    user_id: '', // Would need integration with a proper user creation endpoint or mock for now
+                    employment_status: 'ACTIVE'
                 };
+                
+                // Real Dayflow backend requires a corresponding User record to create an Employee.
+                // Normally an Auth service creates the User + Employee combo.
+                // We will attempt to use the employee creation endpoint, assuming user_id might be auto-generated or optional depending on the backend logic implementation for admin creation.
+                // If it fails, a full registration flow (like auth/register) might be needed.
+                const res = await Api.post('/employees', payload);
 
-                users.push(newUser);
-                DayflowDB.saveData(DayflowDB.USERS_KEY, users);
-
-                // Configure starting salary structure components (seeding total)
-                const payrolls = DayflowDB.getData(DayflowDB.PAYROLL_KEY);
-                payrolls.push({
-                    empid,
-                    basic: salary * 0.5,
-                    hra: salary * 0.2,
-                    standard: salary * 0.1,
-                    bonus: salary * 0.1,
-                    lta: salary * 0.05,
-                    fixed: salary * 0.05
-                });
-                DayflowDB.saveData(DayflowDB.PAYROLL_KEY, payrolls);
-
-                form.reset();
-                modal.classList.remove('active');
-                if (window.Components && Components.showToast) Components.showToast('Employee account created.');
-                this.loadEmployeeDirectory();
+                if (res.success) {
+                    form.reset();
+                    modal.classList.remove('active');
+                    if (window.Components && Components.showToast) Components.showToast('Employee account created.');
+                    await this.loadEmployeeDirectory();
+                } else {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                    else alert(res.message);
+                }
+                
+                btnSave.disabled = false;
             });
         }
     }

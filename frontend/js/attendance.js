@@ -3,16 +3,24 @@
    ========================================================================== */
 
 const Attendance = {
-    init() {
+    async init() {
         const user = Auth.getCurrentUser();
         if (!user) return;
 
-        this.initEmployeeAttendance(user.empid);
+        // Ensure we block rendering until API calls finish where needed
+        await this.initEmployeeAttendance(user.id); // pass user id or nothing as the API uses cookies
         this.initAdminAttendance();
     },
 
+    // Format Date safely
+    formatTime(dateString) {
+        if (!dateString) return '--';
+        const d = new Date(dateString);
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    },
+
     // Employee specific check-in / calendar layout
-    initEmployeeAttendance(empid) {
+    async initEmployeeAttendance(userId) {
         const btnCheckIn = document.getElementById('btn-checkin');
         const btnCheckOut = document.getElementById('btn-checkout');
         const statusText = document.getElementById('clock-status-text');
@@ -20,25 +28,34 @@ const Attendance = {
 
         if (!statusText) return; // Not employee attendance page
 
-        const today = new Date().toISOString().split('T')[0];
+        let myLogs = [];
 
-        // Check if checked in today
-        const getTodayRecord = () => {
-            const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-            return attendance.find(a => a.empid === empid && a.date === today);
+        // Fetch logs
+        const fetchAttendance = async () => {
+            const res = await Api.get('/attendance/me');
+            if (res.success) {
+                myLogs = res.data;
+            }
         };
 
-        const updateClockInCardState = () => {
+        const getTodayRecord = () => {
+            const today = new Date().toISOString().split('T')[0];
+            return myLogs.find(a => a.attendance_date === today);
+        };
+
+        const updateClockInCardState = async () => {
+            await fetchAttendance();
             const record = getTodayRecord();
             if (record) {
-                if (record.checkOut) {
+                if (record.check_out_at) {
                     statusText.innerText = 'Shift Completed';
-                    logTimeText.innerText = `Logged: ${record.checkIn} - ${record.checkOut} (${record.hours.toFixed(2)} hrs)`;
+                    const hours = record.worked_minutes ? (record.worked_minutes / 60).toFixed(2) : '0';
+                    logTimeText.innerText = `Logged: ${this.formatTime(record.check_in_at)} - ${this.formatTime(record.check_out_at)} (${hours} hrs)`;
                     if (btnCheckIn) btnCheckIn.classList.add('hidden');
                     if (btnCheckOut) btnCheckOut.classList.add('hidden');
                 } else {
                     statusText.innerText = 'Checked In';
-                    logTimeText.innerText = `Active since: ${record.checkIn}`;
+                    logTimeText.innerText = `Active since: ${this.formatTime(record.check_in_at)}`;
                     if (btnCheckIn) btnCheckIn.classList.add('hidden');
                     if (btnCheckOut) btnCheckOut.classList.remove('hidden');
                 }
@@ -48,68 +65,45 @@ const Attendance = {
                 if (btnCheckIn) btnCheckIn.classList.remove('hidden');
                 if (btnCheckOut) btnCheckOut.classList.add('hidden');
             }
+
+            this.renderWeeklyLogs(myLogs);
+            this.renderMonthlyCalendar(myLogs);
+            this.renderSummaryCounters(myLogs);
         };
 
-        updateClockInCardState();
+        await updateClockInCardState();
 
         // Check In Click Event
         if (btnCheckIn) {
-            btnCheckIn.onclick = () => {
-                const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-                const now = new Date();
-                const checkIn = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-                attendance.push({
-                    empid,
-                    date: today,
-                    checkIn,
-                    checkOut: '',
-                    hours: 0,
-                    status: 'present'
-                });
-
-                DayflowDB.saveData(DayflowDB.ATTENDANCE_KEY, attendance);
-                if (window.Components && Components.showToast) Components.showToast('Checked in successfully!');
+            btnCheckIn.onclick = async () => {
+                btnCheckIn.disabled = true;
+                const res = await Api.post('/attendance/check-in');
                 
-                updateClockInCardState();
-                this.renderWeeklyLogs(empid);
-                this.renderMonthlyCalendar(empid);
-                this.renderSummaryCounters(empid);
+                if (res.success) {
+                    if (window.Components && Components.showToast) Components.showToast('Checked in successfully!');
+                    await updateClockInCardState();
+                } else {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                    else alert(res.message);
+                }
+                btnCheckIn.disabled = false;
             };
         }
 
         // Check Out Click Event
         if (btnCheckOut) {
-            btnCheckOut.onclick = () => {
-                const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-                const idx = attendance.findIndex(a => a.empid === empid && a.date === today);
-
-                if (idx !== -1) {
-                    const now = new Date();
-                    const checkOut = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    
-                    // Parse check-in to get hours worked
-                    const checkInTime = new Date(`${today} ${attendance[idx].checkIn}`);
-                    const checkOutTime = new Date(`${today} ${checkOut}`);
-                    const diffMs = checkOutTime - checkInTime;
-                    const hours = diffMs > 0 ? diffMs / (1000 * 60 * 60) : 8.5; // fallback hours
-
-                    attendance[idx].checkOut = checkOut;
-                    attendance[idx].hours = parseFloat(hours.toFixed(2));
-                    
-                    // Determine half-day or present
-                    if (hours < 4) {
-                        attendance[idx].status = 'half-day';
-                    }
-
-                    DayflowDB.saveData(DayflowDB.ATTENDANCE_KEY, attendance);
+            btnCheckOut.onclick = async () => {
+                btnCheckOut.disabled = true;
+                const res = await Api.post('/attendance/check-out');
+                
+                if (res.success) {
                     if (window.Components && Components.showToast) Components.showToast('Checked out successfully!');
-                    
-                    updateClockInCardState();
-                    this.renderWeeklyLogs(empid);
-                    this.renderMonthlyCalendar(empid);
-                    this.renderSummaryCounters(empid);
+                    await updateClockInCardState();
+                } else {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                    else alert(res.message);
                 }
+                btnCheckOut.disabled = false;
             };
         }
 
@@ -127,57 +121,52 @@ const Attendance = {
                 if (panel) panel.classList.add('active');
             };
         });
-
-        // Initialize display
-        this.renderWeeklyLogs(empid);
-        this.renderMonthlyCalendar(empid);
-        this.renderSummaryCounters(empid);
     },
 
-    // Render employee weekly lists logs (Section 3 Excalidraw)
-    renderWeeklyLogs(empid) {
+    // Render employee weekly lists logs
+    renderWeeklyLogs(myLogs) {
         const tbody = document.getElementById('weekly-logs-tbody');
         if (!tbody) return;
-
-        const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-        // Load latest 10 logs
-        const myLogs = attendance.filter(a => a.empid === empid).sort((a, b) => b.date.localeCompare(a.date)).slice(0, 10);
 
         if (myLogs.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" class="empty-state-text">No attendance records found.</td></tr>';
             return;
         }
 
-        tbody.innerHTML = myLogs.map(log => {
-            const dayOfWeek = new Date(log.date).toLocaleDateString([], { weekday: 'long' });
+        // latest 10
+        const logsToShow = myLogs.slice(0, 10);
+
+        tbody.innerHTML = logsToShow.map(log => {
+            const dayOfWeek = new Date(log.attendance_date).toLocaleDateString([], { weekday: 'long' });
+            const checkIn = this.formatTime(log.check_in_at);
+            const checkOut = log.check_out_at ? this.formatTime(log.check_out_at) : '--';
+            const hours = log.worked_minutes ? (log.worked_minutes / 60).toFixed(2) + ' hrs' : '--';
+            
             return `
                 <tr>
-                    <td><strong>${log.date}</strong></td>
+                    <td><strong>${log.attendance_date}</strong></td>
                     <td>${dayOfWeek}</td>
-                    <td>${log.checkIn || '--'}</td>
-                    <td>${log.checkOut || '--'}</td>
-                    <td>${log.hours ? log.hours.toFixed(2) + ' hrs' : '--'}</td>
-                    <td><span class="status-badge ${log.status}">${log.status}</span></td>
+                    <td>${checkIn}</td>
+                    <td>${checkOut}</td>
+                    <td>${hours}</td>
+                    <td><span class="status-badge ${log.status.toLowerCase()}">${log.status}</span></td>
                 </tr>
             `;
         }).join('');
     },
 
-    // Render monthly calendar heatmap grid (Section 3 Excalidraw details)
-    renderMonthlyCalendar(empid) {
+    // Render monthly calendar heatmap grid
+    renderMonthlyCalendar(myLogs) {
         const container = document.getElementById('calendar-days-container');
         if (!container) return;
 
-        // Current Month (August 2026)
-        const year = 2026;
-        const monthIndex = 7; // August (0-indexed)
-        const daysInMonth = 31;
+        const now = new Date();
+        const year = now.getFullYear();
+        const monthIndex = now.getMonth();
+        const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
         
         // Find starting day of week
         const startDay = new Date(year, monthIndex, 1).getDay();
-
-        const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-        const myMonthAtt = attendance.filter(a => a.empid === empid && a.date.startsWith('2026-08'));
 
         let cellsHtml = '';
 
@@ -189,12 +178,13 @@ const Attendance = {
         // Render days
         for (let day = 1; day <= daysInMonth; day++) {
             const dayString = day < 10 ? `0${day}` : day;
-            const dateStr = `2026-08-${dayString}`;
-            const record = myMonthAtt.find(a => a.date === dateStr);
+            const monthString = monthIndex + 1 < 10 ? `0${monthIndex + 1}` : monthIndex + 1;
+            const dateStr = `${year}-${monthString}-${dayString}`;
+            const record = myLogs.find(a => a.attendance_date === dateStr);
             
             let statusClass = '';
             if (record) {
-                statusClass = record.status; // present, absent, half-day, leave
+                statusClass = record.status.toLowerCase();
             }
 
             cellsHtml += `
@@ -209,14 +199,15 @@ const Attendance = {
     },
 
     // Summary counters loader
-    renderSummaryCounters(empid) {
-        const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-        const myMonthAtt = attendance.filter(a => a.empid === empid && a.date.startsWith('2026-08'));
+    renderSummaryCounters(myLogs) {
+        const now = new Date();
+        const monthPrefix = `${now.getFullYear()}-${now.getMonth() + 1 < 10 ? '0' : ''}${now.getMonth() + 1}`;
+        const myMonthAtt = myLogs.filter(a => a.attendance_date.startsWith(monthPrefix));
 
-        const pCount = myMonthAtt.filter(a => a.status === 'present').length;
-        const aCount = myMonthAtt.filter(a => a.status === 'absent').length;
-        const hCount = myMonthAtt.filter(a => a.status === 'half-day').length;
-        const lCount = myMonthAtt.filter(a => a.status === 'leave').length;
+        const pCount = myMonthAtt.filter(a => a.status === 'PRESENT').length;
+        const aCount = myMonthAtt.filter(a => a.status === 'ABSENT').length;
+        const hCount = myMonthAtt.filter(a => a.status === 'HALF_DAY').length;
+        const lCount = myMonthAtt.filter(a => a.status === 'ON_LEAVE').length;
 
         const sumPresent = document.getElementById('sum-present');
         const sumAbsent = document.getElementById('sum-absent');
@@ -229,113 +220,84 @@ const Attendance = {
         if (sumLeave) sumLeave.innerText = lCount;
     },
 
-    // Admin side company attendance overrides (Section 3 Excalidraw - HR View)
-    initAdminAttendance() {
+    // Admin side company attendance overrides
+    async initAdminAttendance() {
         const tbody = document.getElementById('admin-att-tbody');
         if (!tbody) return;
 
         const datePicker = document.getElementById('admin-att-date');
         const deptSelect = document.getElementById('admin-att-dept');
 
-        const loadRecords = () => {
+        // Set default date to today
+        if (datePicker && !datePicker.value) {
+            datePicker.value = new Date().toISOString().split('T')[0];
+        }
+
+        const loadRecords = async () => {
             const selectedDate = datePicker.value;
-            const selectedDept = deptSelect.value;
+            if (!selectedDate) return;
 
-            const users = DayflowDB.getData(DayflowDB.USERS_KEY);
-            const attendance = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
+            tbody.innerHTML = '<tr><td colspan="6">Loading attendance...</td></tr>';
 
-            const employees = users.filter(u => u.role === 'employee' && (!selectedDept || u.dept === selectedDept));
-            const dateRecords = attendance.filter(a => a.date === selectedDate);
+            // Get all employees and attendance
+            const empRes = await Api.get('/employees');
+            const attRes = await Api.get('/attendance');
+            
+            if (!empRes.success || !attRes.success) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state-text">Unable to load attendance records.</td></tr>';
+                return;
+            }
 
-            tbody.innerHTML = employees.map(emp => {
-                const record = dateRecords.find(r => r.empid === emp.empid);
-                const checkIn = record ? record.checkIn : '';
-                const checkOut = record ? record.checkOut : '';
-                const hours = record ? record.hours : 0;
-                const status = record ? record.status : 'absent';
+            const employees = empRes.data;
+            const allAtt = attRes.data;
+
+            const selectedDept = deptSelect ? deptSelect.value : '';
+
+            const filteredEmps = employees.filter(u => u.employment_status === 'ACTIVE' && (!selectedDept || u.department_id === selectedDept));
+            const dateRecords = allAtt.filter(a => a.attendance_date === selectedDate);
+
+            if (filteredEmps.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="6" class="empty-state-text">No employees found.</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = filteredEmps.map(emp => {
+                const record = dateRecords.find(r => r.employee_id === emp.id);
+                const checkIn = record && record.check_in_at ? this.formatTime(record.check_in_at) : '';
+                const checkOut = record && record.check_out_at ? this.formatTime(record.check_out_at) : '';
+                const hours = record && record.worked_minutes ? (record.worked_minutes / 60).toFixed(2) : 0;
+                const status = record ? record.status : 'ABSENT';
 
                 return `
                     <tr>
                         <td>
                             <div class="directory-table-user-cell">
                                 <div class="user-avatar-mini">
-                                    <img src="${emp.avatar || '../assets/avatar-placeholder.svg'}" alt="${emp.name}">
+                                    <img src="../assets/avatar-placeholder.svg" alt="${emp.first_name}">
                                 </div>
-                                <strong>${emp.name}</strong>
+                                <strong>${emp.first_name} ${emp.last_name}</strong>
                             </div>
                         </td>
-                        <td>${emp.designation}</td>
+                        <td>${emp.employee_code}</td>
                         <td>${checkIn || '--'}</td>
                         <td>${checkOut || '--'}</td>
-                        <td>${hours ? hours.toFixed(2) + ' hrs' : '--'}</td>
+                        <td>${hours ? hours + ' hrs' : '--'}</td>
                         <td>
-                            <select class="admin-override-select" data-empid="${emp.empid}" data-date="${selectedDate}">
-                                <option value="present" ${status === 'present' ? 'selected' : ''}>Present</option>
-                                <option value="absent" ${status === 'absent' ? 'selected' : ''}>Absent</option>
-                                <option value="half-day" ${status === 'half-day' ? 'selected' : ''}>Half-Day</option>
-                                <option value="leave" ${status === 'leave' ? 'selected' : ''}>Leave</option>
-                            </select>
+                            <span class="status-badge ${status.toLowerCase()}">${status}</span>
                         </td>
                     </tr>
                 `;
             }).join('');
-
-            // Bind override changes
-            tbody.querySelectorAll('.admin-override-select').forEach(select => {
-                select.onchange = (e) => {
-                    const empid = select.getAttribute('data-empid');
-                    const date = select.getAttribute('data-date');
-                    const status = e.target.value;
-
-                    const allAtt = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-                    const idx = allAtt.findIndex(a => a.empid === empid && a.date === date);
-
-                    if (idx !== -1) {
-                        allAtt[idx].status = status;
-                        if (status === 'absent' || status === 'leave') {
-                            allAtt[idx].checkIn = '';
-                            allAtt[idx].checkOut = '';
-                            allAtt[idx].hours = 0;
-                        } else if (status === 'present' && !allAtt[idx].checkIn) {
-                            allAtt[idx].checkIn = '09:00 AM';
-                            allAtt[idx].checkOut = '06:00 PM';
-                            allAtt[idx].hours = 9.0;
-                        }
-                    } else {
-                        // Create new record override
-                        allAtt.push({
-                            empid,
-                            date,
-                            checkIn: status === 'present' ? '09:00 AM' : '',
-                            checkOut: status === 'present' ? '06:00 PM' : '',
-                            hours: status === 'present' ? 9.0 : 0,
-                            status
-                        });
-                    }
-
-                    DayflowDB.saveData(DayflowDB.ATTENDANCE_KEY, allAtt);
-                    if (window.Components && Components.showToast) {
-                        Components.showToast(`Override saved for ${empid}`);
-                    }
-                    loadRecords();
-                };
-            });
         };
 
-        // Listen for filter overrides
-        datePicker.addEventListener('change', loadRecords);
-        deptSelect.addEventListener('change', loadRecords);
+        if (datePicker) datePicker.addEventListener('change', loadRecords);
+        if (deptSelect) deptSelect.addEventListener('change', loadRecords);
 
         // Pre-run
         loadRecords();
 
-        // Sim Export CSV
-        const btnExport = document.getElementById('btn-export-att');
-        if (btnExport) {
-            btnExport.onclick = () => {
-                alert('Exporting attendance records report to CSV... Download completed.');
-            };
-        }
+        // Overrides logic is disabled in UI since backend enforces actual DB integrity, 
+        // Admin overrides would need a specific endpoint to edit attendance which we can add later.
     }
 };
 

@@ -34,3 +34,23 @@ def api_check_out(
         raise HTTPException(status_code=403, detail="User is not associated with an active employee profile")
     
     return check_out(db, employee)
+
+@router.get("/me", response_model=List[AttendanceRecordResponse])
+def get_my_attendance(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    from app.db.models.attendance import AttendanceRecord
+    employee = db.query(Employee).filter(Employee.user_id == current_user.id).first()
+    if not employee:
+        raise HTTPException(status_code=403, detail="User is not associated with an active employee profile")
+    
+    return db.query(AttendanceRecord).filter(AttendanceRecord.employee_id == employee.id).order_by(AttendanceRecord.attendance_date.desc()).all()
+
+@router.get("", response_model=List[AttendanceRecordResponse])
+def get_all_attendance(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(require_permission("view_all_attendance"))
+):
+    from app.db.models.attendance import AttendanceRecord
+    return db.query(AttendanceRecord).order_by(AttendanceRecord.attendance_date.desc()).all()

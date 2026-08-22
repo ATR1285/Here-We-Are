@@ -3,16 +3,22 @@
    ========================================================================== */
 
 const Leave = {
-    init() {
+    async init() {
         const user = Auth.getCurrentUser();
         if (!user) return;
 
-        this.initEmployeeLeave(user);
+        await this.initEmployeeLeave();
         this.initAdminLeave();
     },
 
+    // Format Date safely
+    formatDate(dateString) {
+        if (!dateString) return '--';
+        return dateString;
+    },
+
     // Employee specific requests submissions & tables
-    initEmployeeLeave(user) {
+    async initEmployeeLeave() {
         const form = document.getElementById('apply-leave-form');
         if (!form) return;
 
@@ -20,6 +26,20 @@ const Leave = {
         const endDateInput = document.getElementById('leave-end-date');
         const daysBadge = document.getElementById('leave-days-badge');
         const daysLabel = document.getElementById('lbl-total-days');
+        const leaveTypeSelect = document.getElementById('leave-type');
+        
+        let leaveTypes = [];
+
+        // Fetch leave types for dropdown
+        const loadLeaveTypes = async () => {
+            const res = await Api.get('/leave/types');
+            if (res.success) {
+                leaveTypes = res.data;
+                leaveTypeSelect.innerHTML = leaveTypes.map(lt => 
+                    `<option value="${lt.id}">${lt.name}</option>`
+                ).join('');
+            }
+        };
 
         const calculateDays = () => {
             const startVal = startDateInput.value;
@@ -47,137 +67,128 @@ const Leave = {
         }
 
         // Apply leave submission
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const type = document.getElementById('leave-type').value;
-            const start = startDateInput.value;
-            const end = endDateInput.value;
-            const remarks = document.getElementById('leave-remarks').value.trim();
+            const btnSubmit = form.querySelector('button[type="submit"]');
+            
+            const leave_type_id = leaveTypeSelect.value;
+            const start_date = startDateInput.value;
+            const end_date = endDateInput.value;
+            const reason = document.getElementById('leave-remarks').value.trim();
             const days = calculateDays();
 
             if (days <= 0) {
                 alert('End Date must be after or equal to Start Date.');
                 return;
             }
-
-            // Perform balance checks before saving
-            const balances = this.getLeaveBalances(user.empid);
-            if (type === 'Paid' && days > balances.paid) {
-                alert(`Insufficient Paid Leave balance. You only have ${balances.paid} days remaining.`);
-                return;
-            }
-            if (type === 'Sick' && days > balances.sick) {
-                alert(`Insufficient Sick Leave balance. You only have ${balances.sick} days remaining.`);
-                return;
-            }
-
-            const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
-            const newReq = {
-                id: `L0${leaves.length + 1}`,
-                empid: user.empid,
-                name: user.name,
-                type,
-                start,
-                end,
-                days,
-                remarks,
-                status: 'Pending',
-                comments: '',
-                appliedOn: new Date().toISOString().split('T')[0]
-            };
-
-            leaves.push(newReq);
-            DayflowDB.saveData(DayflowDB.LEAVES_KEY, leaves);
             
-            form.reset();
-            daysBadge.classList.add('hidden');
+            btnSubmit.disabled = true;
 
-            if (window.Components && Components.showToast) {
-                Components.showToast('Leave request submitted successfully.');
+            const res = await Api.post('/leave/apply', {
+                leave_type_id,
+                start_date,
+                end_date,
+                reason
+            });
+
+            if (res.success) {
+                form.reset();
+                daysBadge.classList.add('hidden');
+
+                if (window.Components && Components.showToast) {
+                    Components.showToast('Leave request submitted successfully.');
+                }
+                
+                await this.renderEmployeeHistory();
+                await this.renderEmployeeBalances();
+            } else {
+                if (window.Components && Components.showToast) {
+                    Components.showToast(res.message, 'error');
+                } else {
+                    alert(res.message);
+                }
             }
             
-            this.renderEmployeeHistory(user.empid);
-            this.renderEmployeeBalances(user.empid);
+            btnSubmit.disabled = false;
         });
 
         // Initialize displays
-        this.renderEmployeeHistory(user.empid);
-        this.renderEmployeeBalances(user.empid);
-    },
-
-    // Calculate balances remaining
-    getLeaveBalances(empid) {
-        const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
-        const myApproved = leaves.filter(l => l.empid === empid && l.status === 'Approved');
-
-        let paidUsed = 0;
-        let sickUsed = 0;
-        let unpaidUsed = 0;
-
-        myApproved.forEach(l => {
-            if (l.type === 'Paid') paidUsed += l.days;
-            if (l.type === 'Sick') sickUsed += l.days;
-            if (l.type === 'Unpaid') unpaidUsed += l.days;
-        });
-
-        return {
-            paid: Math.max(0, 15 - paidUsed),
-            sick: Math.max(0, 8 - sickUsed),
-            unpaid: unpaidUsed
-        };
+        await loadLeaveTypes();
+        await this.renderEmployeeHistory();
+        await this.renderEmployeeBalances();
     },
 
     // Populate balances boxes
-    renderEmployeeBalances(empid) {
+    async renderEmployeeBalances() {
         const balPaid = document.getElementById('bal-paid-avail');
         const balSick = document.getElementById('bal-sick-avail');
         const balUnpaid = document.getElementById('bal-unpaid-used');
 
         if (!balPaid) return;
 
-        const balances = this.getLeaveBalances(empid);
-        balPaid.innerText = `${balances.paid} / 15`;
-        balSick.innerText = `${balances.sick} / 8`;
-        balUnpaid.innerText = `${balances.unpaid} days`;
+        const res = await Api.get('/leave/me/balances');
+        if (res.success) {
+            const balances = res.data;
+            
+            const findBal = (code) => balances.find(b => b.leave_type && b.leave_type.code === code) || { available_days: 0, allocated_days: 0, used_days: 0 };
+            
+            const paid = findBal('PAID');
+            const sick = findBal('SICK');
+            const unpaid = findBal('UNPAID');
+
+            balPaid.innerText = `${paid.available_days} / ${paid.allocated_days}`;
+            balSick.innerText = `${sick.available_days} / ${sick.allocated_days}`;
+            balUnpaid.innerText = `${unpaid.used_days} days`;
+        }
     },
 
     // Render employee personal requests list table
-    renderEmployeeHistory(empid) {
+    async renderEmployeeHistory() {
         const tbody = document.getElementById('leave-history-tbody');
         if (!tbody) return;
 
-        const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
-        const myRequests = leaves.filter(l => l.empid === empid).sort((a, b) => b.appliedOn.localeCompare(a.appliedOn));
+        const res = await Api.get('/leave/me/requests');
+        if (res.success) {
+            const myRequests = res.data;
+            
+            if (myRequests.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="empty-state-text">No leave requests found.</td></tr>';
+                return;
+            }
 
-        if (myRequests.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="4" class="empty-state-text">No leave requests found.</td></tr>';
-            return;
+            tbody.innerHTML = myRequests.map(r => `
+                <tr>
+                    <td><strong>${r.leave_type ? r.leave_type.name : 'Leave'}</strong></td>
+                    <td>${this.formatDate(r.start_date)} &rarr; ${this.formatDate(r.end_date)}</td>
+                    <td>${r.requested_days} days</td>
+                    <td><span class="status-badge ${r.status.toLowerCase()}">${r.status}</span></td>
+                </tr>
+            `).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-state-text">Unable to load requests.</td></tr>';
         }
-
-        tbody.innerHTML = myRequests.map(r => `
-            <tr>
-                <td><strong>${r.type}</strong></td>
-                <td>${r.start} &rarr; ${r.end}</td>
-                <td>${r.days} days</td>
-                <td><span class="status-badge ${r.status.toLowerCase()}">${r.status}</span></td>
-            </tr>
-        `).join('');
     },
 
-    // Admin leaves approvals dashboard controller (Section 4 Excalidraw)
-    initAdminLeave() {
+    // Admin leaves approvals dashboard controller
+    async initAdminLeave() {
         const tbody = document.getElementById('approvals-tbody');
         if (!tbody) return;
 
         const tabs = document.querySelectorAll('#leave-tabs-row .tab-btn');
         let currentFilter = 'all';
 
-        const loadApprovals = () => {
-            const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
-            let filtered = [...leaves].sort((a, b) => b.appliedOn.localeCompare(a.appliedOn));
+        const loadApprovals = async () => {
+            const res = await Api.get('/leave/requests');
+            if (!res.success) {
+                tbody.innerHTML = '<tr><td colspan="8" class="empty-state-text">Unable to load requests.</td></tr>';
+                return;
+            }
+
+            let allRequests = res.data;
+            let filtered = allRequests;
 
             if (currentFilter !== 'all') {
-                filtered = filtered.filter(l => l.status === currentFilter);
+                filtered = filtered.filter(l => l.status.toLowerCase() === currentFilter.toLowerCase());
             }
 
             if (filtered.length === 0) {
@@ -185,22 +196,27 @@ const Leave = {
                 return;
             }
 
+            // Fetch employees for details if not included in the response (assumes backend includes employee object)
             tbody.innerHTML = filtered.map(r => {
-                const actionButtons = r.status === 'Pending' ? `
+                const actionButtons = r.status === 'PENDING' ? `
                     <div class="approvals-action-btns">
                         <button class="btn btn-danger btn-xs btn-reject" data-id="${r.id}"><i class="fa-solid fa-xmark"></i> Reject</button>
                         <button class="btn btn-success btn-xs btn-approve" data-id="${r.id}"><i class="fa-solid fa-check"></i> Approve</button>
                     </div>
                 ` : `<span class="text-muted" style="font-size: 0.8rem;">Processed</span>`;
 
+                const empName = r.employee ? `${r.employee.first_name} ${r.employee.last_name}` : 'Unknown';
+                const empCode = r.employee ? r.employee.employee_code : '';
+                const typeName = r.leave_type ? r.leave_type.name : 'Leave';
+
                 return `
                     <tr class="row-status-${r.status.toLowerCase()}">
-                        <td><strong>${r.name}</strong><br><span class="text-muted" style="font-size:0.75rem">${r.empid}</span></td>
-                        <td>${r.type}</td>
-                        <td>${r.start}</td>
-                        <td>${r.end}</td>
-                        <td>${r.days} days</td>
-                        <td><span class="remarks-preview" title="${r.remarks}">${r.remarks || '--'}</span></td>
+                        <td><strong>${empName}</strong><br><span class="text-muted" style="font-size:0.75rem">${empCode}</span></td>
+                        <td>${typeName}</td>
+                        <td>${this.formatDate(r.start_date)}</td>
+                        <td>${this.formatDate(r.end_date)}</td>
+                        <td>${r.requested_days} days</td>
+                        <td><span class="remarks-preview" title="${r.reason}">${r.reason || '--'}</span></td>
                         <td><span class="status-badge ${r.status.toLowerCase()}">${r.status}</span></td>
                         <td>${actionButtons}</td>
                     </tr>
@@ -219,7 +235,7 @@ const Leave = {
                     const id = btn.getAttribute('data-id');
                     if (modal) {
                         hiddenId.value = id;
-                        hiddenAction.value = 'Approved';
+                        hiddenAction.value = 'approve';
                         modalTitle.innerText = 'Approve Leave Request';
                         btnSubmit.className = 'btn btn-block btn-success';
                         btnSubmit.innerText = 'Approve Request';
@@ -233,7 +249,7 @@ const Leave = {
                     const id = btn.getAttribute('data-id');
                     if (modal) {
                         hiddenId.value = id;
-                        hiddenAction.value = 'Rejected';
+                        hiddenAction.value = 'reject';
                         modalTitle.innerText = 'Reject Leave Request';
                         btnSubmit.className = 'btn btn-block btn-danger';
                         btnSubmit.innerText = 'Reject Request';
@@ -261,68 +277,28 @@ const Leave = {
         if (form && modal) {
             closeBtn.onclick = () => modal.classList.remove('active');
 
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
                 const id = document.getElementById('decision-request-id').value;
-                const status = document.getElementById('decision-type-action').value;
+                const action = document.getElementById('decision-type-action').value;
                 const comments = document.getElementById('decision-comments').value.trim();
 
-                const leaves = DayflowDB.getData(DayflowDB.LEAVES_KEY);
-                const reqIndex = leaves.findIndex(l => l.id === id);
+                const submitBtn = form.querySelector('button[type="submit"]');
+                submitBtn.disabled = true;
 
-                if (reqIndex !== -1) {
-                    leaves[reqIndex].status = status;
-                    leaves[reqIndex].comments = comments;
-
-                    // Deduct balance from employee records if approved
-                    if (status === 'Approved') {
-                        const leaveStart = new Date(leaves[reqIndex].start);
-                        const leaveEnd = new Date(leaves[reqIndex].end);
-                        const allAtt = DayflowDB.getData(DayflowDB.ATTENDANCE_KEY);
-                        
-                        // Seed employee attendance days as 'leave'
-                        for (let d = new Date(leaveStart); d <= leaveEnd; d.setDate(d.getDate() + 1)) {
-                            const dateStr = d.toISOString().split('T')[0];
-                            const dayOfWeek = d.getDay();
-                            
-                            if (dayOfWeek === 0 || dayOfWeek === 6) continue; // skip weekends
-
-                            const attIdx = allAtt.findIndex(a => a.empid === leaves[reqIndex].empid && a.date === dateStr);
-                            if (attIdx !== -1) {
-                                allAtt[attIdx].status = 'leave';
-                                allAtt[attIdx].checkIn = '';
-                                allAtt[attIdx].checkOut = '';
-                                allAtt[attIdx].hours = 0;
-                            } else {
-                                allAtt.push({
-                                    empid: leaves[reqIndex].empid,
-                                    date: dateStr,
-                                    checkIn: '',
-                                    checkOut: '',
-                                    hours: 0,
-                                    status: 'leave'
-                                });
-                            }
-                        }
-                        DayflowDB.saveData(DayflowDB.ATTENDANCE_KEY, allAtt);
-                    }
-
-                    DayflowDB.saveData(DayflowDB.LEAVES_KEY, leaves);
-                    
-                    // Dispatch alert notifications
-                    if (window.Components && Components.addNotification) {
-                        Components.addNotification(
-                            leaves[reqIndex].empid,
-                            `Your leave request from ${leaves[reqIndex].start} has been ${status}.`,
-                            status === 'Approved' ? 'fa-circle-check' : 'fa-circle-xmark'
-                        );
-                    }
-
+                const res = await Api.post(`/leave/${id}/${action}`, { comments });
+                
+                if (res.success) {
                     form.reset();
                     modal.classList.remove('active');
-                    if (window.Components && Components.showToast) Components.showToast(`Request ${status}`);
+                    if (window.Components && Components.showToast) Components.showToast(`Request ${action}d successfully`);
                     loadApprovals();
+                } else {
+                    if (window.Components && Components.showToast) Components.showToast(res.message, 'error');
+                    else alert(res.message);
                 }
+                
+                submitBtn.disabled = false;
             });
         }
 
