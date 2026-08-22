@@ -44,6 +44,8 @@ class ExpenseClaim(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
+    items = relationship("ExpenseItem", back_populates="claim")
+
 class ExpenseItem(Base):
     __tablename__ = "expense_items"
 
@@ -56,6 +58,8 @@ class ExpenseItem(Base):
     receipt_reference = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+    claim = relationship("ExpenseClaim", back_populates="items")
 
 class ExpenseAuditTrail(Base):
     __tablename__ = "expense_audit_trails"

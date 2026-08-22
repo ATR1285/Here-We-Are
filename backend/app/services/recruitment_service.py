@@ -39,7 +39,7 @@ def convert_candidate_to_employee(db: Session, onboarding_id: str, current_user:
         # Create User identity
         new_user = User(
             email=candidate.email,
-            password_hash=password_hash,
+            hashed_password=password_hash,
             is_active=True
         )
         db.add(new_user)

@@ -54,6 +54,15 @@ def finalize_review(db: Session, review_id: str, manager_rating: int, comments: 
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
         
+    # Structural Ownership Check (Item 8)
+    from app.db.models.employee import Employee
+    reviewer_emp = db.query(Employee).filter(Employee.user_id == reviewer.id).first()
+    if not reviewer_emp:
+        raise HTTPException(status_code=403, detail="Reviewer does not have an active employee profile")
+        
+    if review.employee.manager_id != reviewer_emp.id:
+        raise HTTPException(status_code=403, detail="Only the direct manager can finalize the performance review")
+        
     # Example logic: Assume state went SELF_SUBMITTED -> MANAGER_REVIEW, now to FINALIZED
     if review.status == ReviewStatus.SELF_SUBMITTED:
          # Implicit transition for this example to MANAGER_REVIEW -> FINALIZED
