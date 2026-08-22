@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Admin Leave Approvals</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/leave.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="employees.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Employees</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Attendance Records</span>
+                </a>
+                <a href="leave-approvals.html" class="menu-item active">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Leave Approvals</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Payroll Control</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">HR Admin</span>
+                    <span class="user-role-mini">Admin / HR</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Leave Approvals</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Switch View Dropdown -->
+                    <div class="switch-employee-view">
+                        <label for="admin-switch-employee">View As Employee:</label>
+                        <select id="admin-switch-employee">
+                            <option value="">-- Switch View --</option>
+                            <!-- Options filled dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">HR Admin</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Body Content -->
+            <main class="content-body">
+                <!-- Status Tab Filter Headers -->
+                <div class="leave-approvals-tabs-card glass-card">
+                    <div class="tabs-row" id="leave-tabs-row">
+                        <button class="tab-btn active" data-filter="all">All Requests</button>
+                        <button class="tab-btn" data-filter="Pending">Pending</button>
+                        <button class="tab-btn" data-filter="Approved">Approved</button>
+                        <button class="tab-btn" data-filter="Rejected">Rejected</button>
+                    </div>
+                </div>
+
+                <!-- Requests List Table Panel (Matches Excalidraw Section 4) -->
+                <div class="glass-card approvals-table-card">
+                    <div class="table-responsive">
+                        <table class="approvals-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>Leave Type</th>
+                                    <th>Start Date</th>
+                                    <th>End Date</th>
+                                    <th>Days</th>
+                                    <th>Remarks</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="approvals-tbody">
+                                <!-- Populated dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Action Decision Remarks Modal -->
+    <div id="decision-modal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3 id="decision-modal-title">Leave Request Decision</h3>
+                <button class="close-btn" id="close-decision-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="decision-form">
+                    <input type="hidden" id="decision-request-id">
+                    <input type="hidden" id="decision-type-action"> <!-- 'Approve' or 'Reject' -->
+                    <div class="input-group">
+                        <label for="decision-comments">Add Comments / Feedback (Optional)</label>
+                        <textarea id="decision-comments" rows="3" placeholder="Provide any reason or additional instructions..."></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-block" id="btn-decision-submit">Confirm Decision</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/leave.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('admin');
+        });
+    </script>
+</body>
+</html>

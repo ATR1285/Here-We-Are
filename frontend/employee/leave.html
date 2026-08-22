@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Apply for Leave</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/leave.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>My Attendance</span>
+                </a>
+                <a href="leave.html" class="menu-item active">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Apply for Leave</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>My Salary</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">Employee User</span>
+                    <span class="user-role-mini">Employee</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Leave Management</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">Employee User</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+                            <hr>
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Leave Body Content -->
+            <main class="content-body">
+                <!-- Leave balances row -->
+                <div class="leave-balances-grid">
+                    <div class="balance-card glass-card">
+                        <div class="bal-header">
+                            <span class="bal-title">Annual Paid Leave</span>
+                            <i class="fa-solid fa-umbrella-beach paid-color"></i>
+                        </div>
+                        <div class="bal-values">
+                            <div class="bal-main" id="bal-paid-avail">12 / 15</div>
+                            <span class="bal-label">days available</span>
+                        </div>
+                    </div>
+
+                    <div class="balance-card glass-card">
+                        <div class="bal-header">
+                            <span class="bal-title">Sick Leave</span>
+                            <i class="fa-solid fa-briefcase-medical sick-color"></i>
+                        </div>
+                        <div class="bal-values">
+                            <div class="bal-main" id="bal-sick-avail">6 / 8</div>
+                            <span class="bal-label">days available</span>
+                        </div>
+                    </div>
+
+                    <div class="balance-card glass-card">
+                        <div class="bal-header">
+                            <span class="bal-title">Unpaid Leave</span>
+                            <i class="fa-solid fa-calendar-minus unpaid-color"></i>
+                        </div>
+                        <div class="bal-values">
+                            <div class="bal-main" id="bal-unpaid-used">0</div>
+                            <span class="bal-label">days used</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Column Layout: Apply Form & History List -->
+                <div class="leave-grid-layout">
+                    <!-- Column 1: Application Form (Matches Excalidraw Section 4) -->
+                    <div class="glass-card leave-form-card">
+                        <h3>Apply for Leave</h3>
+                        <form id="apply-leave-form">
+                            <div class="input-group">
+                                <label for="leave-type">Leave Type</label>
+                                <select id="leave-type" required>
+                                    <option value="" disabled selected>Select leave type</option>
+                                    <option value="Paid">Paid Leave</option>
+                                    <option value="Sick">Sick Leave</option>
+                                    <option value="Unpaid">Unpaid Leave</option>
+                                </select>
+                            </div>
+
+                            <div class="input-row-flex">
+                                <div class="input-group">
+                                    <label for="leave-start-date">Start Date</label>
+                                    <div class="input-wrapper">
+                                        <i class="fa-solid fa-calendar field-icon"></i>
+                                        <input type="date" id="leave-start-date" required>
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label for="leave-end-date">End Date</label>
+                                    <div class="input-wrapper">
+                                        <i class="fa-solid fa-calendar field-icon"></i>
+                                        <input type="date" id="leave-end-date" required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="days-indicator-box hidden" id="leave-days-badge">
+                                <span>Requested Duration: <strong id="lbl-total-days">0</strong> days</span>
+                            </div>
+
+                            <div class="input-group">
+                                <label for="leave-remarks">Remarks / Reason</label>
+                                <textarea id="leave-remarks" rows="4" placeholder="Describe the reason for your time-off request..." required></textarea>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-block">
+                                <span>Submit Leave Request</span>
+                                <i class="fa-solid fa-paper-plane"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Column 2: Requests History List -->
+                    <div class="glass-card leave-history-card">
+                        <h3>My Leave Requests</h3>
+                        <div class="history-list-wrapper">
+                            <div class="table-responsive">
+                                <table class="history-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Type</th>
+                                            <th>Duration</th>
+                                            <th>Days</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="leave-history-tbody">
+                                        <!-- Populated dynamically by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/leave.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('employee');
+        });
+    </script>
+</body>
+</html>

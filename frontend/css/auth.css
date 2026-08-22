@@ -1,0 +1,349 @@
+/* ==========================================================================
+   DAYFLOW HRMS - AUTHENTICATION PAGES (SIGN IN / SIGN UP)
+   ========================================================================== */
+
+.auth-container {
+    display: flex;
+    min-height: 100vh;
+    width: 100vw;
+    background-color: var(--bg-dark);
+}
+
+/* Left Brand Panel - Dark Theme */
+.auth-brand-panel {
+    flex: 1.2;
+    position: relative;
+    overflow: hidden;
+    background-color: var(--bg-dark);
+    border-right: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 3.5rem;
+}
+
+.brand-bg-glow {
+    position: absolute;
+    top: -10%;
+    left: -10%;
+    width: 60%;
+    height: 60%;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79, 70, 229, 0.15) 0%, transparent 70%);
+    filter: blur(60px);
+    z-index: 1;
+    animation: pulseGlow 10s infinite alternate ease-in-out;
+}
+
+.brand-content {
+    position: relative;
+    z-index: 2;
+    margin-top: 4rem;
+}
+
+.logo-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 3.5rem;
+}
+.logo-icon {
+    font-size: 2rem;
+    color: var(--primary);
+}
+.logo-text {
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.brand-title {
+    font-size: 2.8rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+    color: var(--text-on-dark);
+}
+
+.brand-subtitle {
+    font-size: 1.1rem;
+    color: var(--text-on-dark-secondary);
+    max-width: 460px;
+    margin-bottom: 3rem;
+}
+
+.brand-features {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.feature-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: var(--text-on-dark);
+}
+.feature-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background-color: rgba(79, 70, 229, 0.2);
+    color: #8b5cf6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+}
+
+.brand-footer {
+    position: relative;
+    z-index: 2;
+    font-size: 0.8rem;
+    color: var(--text-on-dark-secondary);
+}
+
+/* Right Form Panel - Light/White Background */
+.auth-form-panel {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    background-color: var(--bg-light);
+}
+
+.form-wrapper {
+    width: 100%;
+    max-width: 400px;
+}
+
+.form-header {
+    margin-bottom: 2.2rem;
+}
+.form-header h2 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 6px;
+    color: var(--text-primary);
+}
+.form-header p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.forgot-link {
+    font-size: 0.8rem;
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+.toggle-password {
+    position: absolute;
+    right: 14px;
+    cursor: pointer;
+    color: var(--text-muted);
+    font-size: 0.95rem;
+    padding: 4px;
+}
+.toggle-password:hover {
+    color: var(--text-primary);
+}
+
+.form-options {
+    margin-bottom: 1.8rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+/* Checkbox Style */
+.checkbox-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    padding-left: 28px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    user-select: none;
+}
+.checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+.checkmark {
+    position: absolute;
+    left: 0;
+    height: 18px;
+    width: 18px;
+    background-color: var(--bg-surface-elevated);
+    border: 1px solid var(--border-light);
+    border-radius: 4px;
+    transition: all var(--transition-fast);
+}
+.checkbox-container:hover input ~ .checkmark {
+    border-color: var(--primary);
+}
+.checkbox-container input:checked ~ .checkmark {
+    background-color: var(--primary);
+    border-color: var(--primary);
+}
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+.checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+.checkbox-container .checkmark:after {
+    left: 6px;
+    top: 2px;
+    width: 4px;
+    height: 8px;
+    border: solid white;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+}
+
+.form-footer {
+    text-align: center;
+    margin-top: 1.8rem;
+    font-size: 0.9rem;
+    color: var(--text-muted);
+}
+.form-footer a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Password Strength Indicator */
+.password-strength-bar {
+    height: 4px;
+    width: 100%;
+    background-color: var(--bg-surface-elevated);
+    border-radius: 2px;
+    margin-top: 8px;
+    overflow: hidden;
+    position: relative;
+}
+.password-strength-bar::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}
+.password-strength-bar.weak::before { width: 33%; background-color: var(--danger); }
+.password-strength-bar.medium::before { width: 66%; background-color: var(--warning); }
+.password-strength-bar.strong::before { width: 100%; background-color: var(--success); }
+
+/* Role Select Form Element */
+.input-row-flex {
+    display: flex;
+    gap: 15px;
+    width: 100%;
+}
+.input-row-flex .input-group {
+    flex: 1;
+}
+select#signup-role {
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+}
+
+/* Email Verification Modal Extras */
+.modal-icon {
+    font-size: 2.5rem;
+    color: var(--primary);
+    margin-bottom: 0.5rem;
+}
+.verification-simulation-box {
+    margin-top: 1.5rem;
+    padding: 1.2rem;
+    background-color: rgba(99, 102, 241, 0.05);
+    border: 1px dashed var(--primary-glow);
+    border-radius: var(--radius-sm);
+    text-align: center;
+}
+.sim-note {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+/* Hackathon Demo Fill UI */
+.demo-login-panel {
+    margin-top: 2.2rem;
+    padding: 1.2rem;
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-sm);
+    background-color: var(--bg-surface-elevated);
+}
+.demo-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.8rem;
+}
+.demo-buttons {
+    display: flex;
+    gap: 10px;
+}
+.demo-buttons button {
+    flex: 1;
+    font-size: 0.75rem;
+}
+
+/* Animations */
+@keyframes pulseGlow {
+    0% { transform: scale(1); opacity: 0.4; }
+    100% { transform: scale(1.1); opacity: 0.6; }
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    .auth-container {
+        flex-direction: column;
+    }
+    .auth-brand-panel {
+        display: none;
+    }
+    .auth-form-panel {
+        flex: 1;
+        padding: 3rem 1.5rem;
+    }
+}

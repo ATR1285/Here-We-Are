@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Employee Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item active">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>My Attendance</span>
+                </a>
+                <a href="leave.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Apply for Leave</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>My Salary</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">Employee User</span>
+                    <span class="user-role-mini">Employee</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Dashboard</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">Employee User</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+                            <hr>
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Body Content -->
+            <main class="content-body">
+                <!-- Welcome Section -->
+                <div class="welcome-banner glass-card">
+                    <div class="welcome-text">
+                        <h2 id="greeting-title">Good morning, employee!</h2>
+                        <p>Welcome back. Here is your summary for today.</p>
+                    </div>
+                    <div class="live-clock-card">
+                        <span id="live-time">10:48:44 AM</span>
+                        <span id="live-date">Saturday, August 22, 2026</span>
+                    </div>
+                </div>
+
+                <!-- Stats Overview Row -->
+                <div class="dashboard-stats-grid">
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon present">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Present (This Month)</span>
+                            <h3 class="stat-value" id="stat-present-days">0 days</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon leave">
+                            <i class="fa-solid fa-plane-departure"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Pending Leaves</span>
+                            <h3 class="stat-value" id="stat-pending-leaves">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon working">
+                            <i class="fa-solid fa-briefcase"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Hours Worked</span>
+                            <h3 class="stat-value" id="stat-work-hours">0h</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Column Dashboard Layout -->
+                <div class="dashboard-details-grid">
+                    <!-- Quick Access Cards -->
+                    <div class="detail-section glass-card">
+                        <div class="section-header">
+                            <h2>Quick Actions</h2>
+                        </div>
+                        <div class="quick-actions-list">
+                            <a href="profile.html" class="quick-action-btn">
+                                <i class="fa-solid fa-id-card icon-profile"></i>
+                                <div class="action-info">
+                                    <h4>Profile Management</h4>
+                                    <p>View salary structure, certificates & skills</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                            </a>
+
+                            <a href="attendance.html" class="quick-action-btn">
+                                <i class="fa-solid fa-clock-pulse icon-attendance"></i>
+                                <div class="action-info">
+                                    <h4>Log Attendance</h4>
+                                    <p>Check-in or check-out and view log history</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                            </a>
+
+                            <a href="leave.html" class="quick-action-btn">
+                                <i class="fa-solid fa-calendar-days icon-leave"></i>
+                                <div class="action-info">
+                                    <h4>Request Leave</h4>
+                                    <p>Submit paid, sick, or unpaid leave requests</p>
+                                </div>
+                                <i class="fa-solid fa-chevron-right arrow-icon"></i>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity Section -->
+                    <div class="detail-section glass-card">
+                        <div class="section-header">
+                            <h2>Recent Activity</h2>
+                        </div>
+                        <div class="activity-timeline" id="activity-timeline">
+                            <p class="empty-state-text">No recent check-in/out activities.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('employee');
+        });
+    </script>
+</body>
+</html>

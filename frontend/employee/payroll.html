@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - My Salary & Payroll</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/payroll.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>My Attendance</span>
+                </a>
+                <a href="leave.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Apply for Leave</span>
+                </a>
+                <a href="payroll.html" class="menu-item active">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>My Salary</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">Employee User</span>
+                    <span class="user-role-mini">Employee</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">My Salary Details</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">Employee User</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+                            <hr>
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Payroll Body Content -->
+            <main class="content-body">
+                <!-- Selector row -->
+                <div class="payroll-selector-card glass-card">
+                    <div class="selector-left">
+                        <i class="fa-solid fa-calendar-days text-muted"></i>
+                        <label for="payroll-month-select">Select Statement Period:</label>
+                        <select id="payroll-month-select">
+                            <option value="2026-08" selected>August 2026</option>
+                            <option value="2026-07">July 2026</option>
+                            <option value="2026-06">June 2026</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-secondary" id="btn-download-payslip">
+                        <i class="fa-solid fa-file-pdf"></i> Download Payslip
+                    </button>
+                </div>
+
+                <!-- Main Grid: Summary Cards + Breakdown -->
+                <div class="payroll-grid">
+                    <!-- Left: Net Pay Summary Details -->
+                    <div class="payroll-summary-panel">
+                        <div class="glass-card net-pay-large-card">
+                            <span class="lbl">Net Take-Home Pay</span>
+                            <h2 class="val" id="pay-net-amount">$0.00</h2>
+                            <p class="desc">For statement period: <span id="pay-period-lbl">August 2026</span></p>
+                            <hr class="divider">
+                            <div class="summary-breakdown-rows">
+                                <div class="breakdown-row">
+                                    <span>Gross Earnings</span>
+                                    <span id="lbl-gross-total">$0.00</span>
+                                </div>
+                                <div class="breakdown-row deduction">
+                                    <span>Total Deductions (Taxes & PF)</span>
+                                    <span id="lbl-deductions-total">-$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="glass-card stat-alert-card">
+                            <div class="alert-icon"><i class="fa-solid fa-circle-check text-success"></i></div>
+                            <div class="alert-info">
+                                <h4>Salary Status: Disbursed</h4>
+                                <p>Your salary was deposited directly into your linked bank account ending in **8922 on Aug 21, 2026.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Detailed Components (Earnings vs Deductions) -->
+                    <div class="payroll-breakdown-panel">
+                        <!-- Earnings section -->
+                        <div class="glass-card breakdown-section-card">
+                            <div class="section-title">
+                                <h3>Earnings (Allowances & Basic)</h3>
+                                <span class="badge badge-success">Additions</span>
+                            </div>
+                            <div class="breakdown-items-list">
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Basic Salary</strong>
+                                        <p>Core component representing the base salary rate.</p>
+                                    </div>
+                                    <span class="item-val" id="pay-basic">$0.00</span>
+                                </div>
+
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>House Rent Allowance (HRA)</strong>
+                                        <p>Provided to offset rental housing expenses.</p>
+                                    </div>
+                                    <span class="item-val" id="pay-hra">$0.00</span>
+                                </div>
+
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Standard Allowance</strong>
+                                        <p>Fixed standard monthly allowance allocation.</p>
+                                    </div>
+                                    <span class="item-val" id="pay-standard">$0.00</span>
+                                </div>
+
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Performance Bonus</strong>
+                                        <p>Variable quarterly milestone bonus allocation.</p>
+                                    </div>
+                                    <span class="item-val" id="pay-bonus">$0.00</span>
+                                </div>
+
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Leave Travel Allowance (LTA)</strong>
+                                        <p>Travel support allocation.</p>
+                                    </div>
+                                    <span class="item-val" id="pay-lta">$0.00</span>
+                                </div>
+
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Fixed Allowance</strong>
+                                        <p>Fixed monthly utility and misc support allocation.</p>
+                                    </div>
+                                    <span class="item-val" id="pay-fixed">$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Deductions section -->
+                        <div class="glass-card breakdown-section-card">
+                            <div class="section-title">
+                                <h3>Deductions</h3>
+                                <span class="badge badge-danger">Subtractions</span>
+                            </div>
+                            <div class="breakdown-items-list">
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Professional Income Tax (TDS)</strong>
+                                        <p>Standard source deduction towards state income tax.</p>
+                                    </div>
+                                    <span class="item-val deduction-val" id="pay-tds">-$0.00</span>
+                                </div>
+
+                                <div class="breakdown-item">
+                                    <div class="item-meta">
+                                        <strong>Provident Fund contribution (PF)</strong>
+                                        <p>Employee portion towards future pension savings program.</p>
+                                    </div>
+                                    <span class="item-val deduction-val" id="pay-pf">-$0.00</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/payroll.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('employee');
+        });
+    </script>
+</body>
+</html>

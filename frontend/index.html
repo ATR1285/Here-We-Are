@@ -1,13 +1,136 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Sign In</title>
+    <meta name="description" content="Sign in to Dayflow Human Resource Management System to manage your profile, track attendance, view payroll, and apply for leaves.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left Branding Panel -->
+        <div class="auth-brand-panel">
+            <div class="brand-bg-glow"></div>
+            <div class="brand-content">
+                <div class="logo-wrapper">
+                    <i class="fa-solid fa-clock-rotate-left logo-icon"></i>
+                    <span class="logo-text">Dayflow</span>
+                </div>
+                <h1 class="brand-title">Every workday,<br><span class="highlight">perfectly aligned.</span></h1>
+                <p class="brand-subtitle">Streamline your employee profile, check attendance daily, manage time-off requests, and track payroll visibility with ease.</p>
+                <div class="brand-features">
+                    <div class="feature-item">
+                        <i class="fa-solid fa-shield-halved feature-icon"></i>
+                        <span>Role-Based Secure Access Control</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-calendar-check feature-icon"></i>
+                        <span>Daily & Weekly Attendance Tracking</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-file-invoice-dollar feature-icon"></i>
+                        <span>Transparent Payroll Breakdown</span>
+                    </div>
+                </div>
+            </div>
+            <div class="brand-footer">
+                <span>&copy; 2026 Dayflow HRMS. All rights reserved.</span>
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="auth-form-panel">
+            <div class="form-wrapper">
+                <div class="form-header">
+                    <h2>Welcome Back</h2>
+                    <p>Enter your details to access your Dayflow account</p>
+                </div>
+                
+                <form id="signin-form" class="auth-form">
+                    <div class="input-group">
+                        <label for="signin-email">Email Address</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-envelope field-icon"></i>
+                            <input type="email" id="signin-email" placeholder="name@company.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <div class="label-row">
+                            <label for="signin-password">Password</label>
+                            <a href="#" class="forgot-link">Forgot password?</a>
+                        </div>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock field-icon"></i>
+                            <input type="password" id="signin-password" placeholder="••••••••" required>
+                            <i class="fa-solid fa-eye-slash toggle-password" id="toggle-pwd-icon"></i>
+                        </div>
+                    </div>
+                    
+                    <div class="form-options">
+                        <label class="checkbox-container">
+                            <input type="checkbox" id="remember-me">
+                            <span class="checkmark"></span>
+                            Remember me
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>Sign In</span>
+                        <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>New to Dayflow? <a href="signup.html">Create an account</a></p>
+                </div>
+
+                <!-- Demo login assist panel (Highly recommended for Hackathons) -->
+                <div class="demo-login-panel">
+                    <div class="demo-title">
+                        <i class="fa-solid fa-circle-info"></i>
+                        <span>Demo Quick Fill</span>
+                    </div>
+                    <div class="demo-buttons">
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-demo-employee">
+                            <i class="fa-solid fa-user"></i> Employee Mode
+                        </button>
+                        <button type="button" class="btn btn-secondary btn-sm" id="btn-demo-admin">
+                            <i class="fa-solid fa-user-tie"></i> Admin / HR Mode
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if already logged in and redirect accordingly
+            if (Auth.isAuthenticated()) {
+                const user = Auth.getCurrentUser();
+                if (user.role === 'admin' || user.role === 'hr') {
+                    window.location.href = 'admin/dashboard.html';
+                } else {
+                    window.location.href = 'employee/dashboard.html';
+                }
+            }
+        });
+    </script>
+</body>
 </html>

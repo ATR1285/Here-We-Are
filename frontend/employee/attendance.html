@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Attendance Tracking</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/attendance.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="profile.html" class="menu-item">
+                    <i class="fa-solid fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="attendance.html" class="menu-item active">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>My Attendance</span>
+                </a>
+                <a href="leave.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Apply for Leave</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>My Salary</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">Employee User</span>
+                    <span class="user-role-mini">Employee</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">My Attendance</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">Employee User</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+                            <hr>
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Attendance Body Content -->
+            <main class="content-body">
+                <!-- Top Panel: Live Check In/Out Widget -->
+                <div class="attendance-top-grid">
+                    <!-- Check-in card -->
+                    <div class="glass-card clock-in-card">
+                        <div class="clock-icon-wrapper">
+                            <i class="fa-regular fa-clock-four clock-anim"></i>
+                        </div>
+                        <div class="clock-status-box">
+                            <h3 id="clock-status-text">Not Checked In</h3>
+                            <span class="clock-subtext" id="clock-time-log">Shift: 09:00 AM - 06:00 PM</span>
+                        </div>
+                        <div class="clock-actions">
+                            <button class="btn btn-primary" id="btn-checkin">
+                                <i class="fa-solid fa-right-to-bracket"></i> Check In
+                            </button>
+                            <button class="btn btn-danger hidden" id="btn-checkout">
+                                <i class="fa-solid fa-right-from-bracket"></i> Check Out
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Statistics Summary -->
+                    <div class="glass-card attendance-summary-card">
+                        <h3>August 2026 Summary</h3>
+                        <div class="att-summary-grid">
+                            <div class="summary-item">
+                                <span class="summary-val present-color" id="sum-present">0</span>
+                                <span class="summary-lbl">Present</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-val absent-color" id="sum-absent">0</span>
+                                <span class="summary-lbl">Absent</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-val half-day-color" id="sum-halfday">0</span>
+                                <span class="summary-lbl">Half-Day</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-val leave-color" id="sum-leave">0</span>
+                                <span class="summary-lbl">Leave</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main View Panel: Toggle & Details -->
+                <div class="attendance-main-card glass-card">
+                    <div class="panel-header-row">
+                        <!-- View Toggle -->
+                        <div class="view-toggles">
+                            <button class="toggle-btn active" data-view="weekly">Weekly Logs</button>
+                            <button class="toggle-btn" data-view="monthly">Monthly Calendar</button>
+                        </div>
+                        <div class="header-right-label" id="calendar-heading">
+                            <span>August 2026</span>
+                        </div>
+                    </div>
+
+                    <!-- Weekly Log view content (Matches Excalidraw Section 3) -->
+                    <div class="attendance-view-panel active" id="view-weekly">
+                        <div class="table-responsive">
+                            <table class="att-table">
+                                <thead>
+                                    <tr>
+                                        <th>Date</th>
+                                        <th>Day</th>
+                                        <th>Check In</th>
+                                        <th>Check Out</th>
+                                        <th>Work Hours</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="weekly-logs-tbody">
+                                    <!-- Rendered dynamically by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Monthly Calendar view content -->
+                    <div class="attendance-view-panel" id="view-monthly">
+                        <div class="calendar-grid-header">
+                            <div>Sun</div>
+                            <div>Mon</div>
+                            <div>Tue</div>
+                            <div>Wed</div>
+                            <div>Thu</div>
+                            <div>Fri</div>
+                            <div>Sat</div>
+                        </div>
+                        <div class="calendar-grid-days" id="calendar-days-container">
+                            <!-- Filled dynamically by JS -->
+                        </div>
+                        <!-- Calendar Legend -->
+                        <div class="calendar-legend">
+                            <span class="legend-item"><span class="legend-color legend-present"></span> Present</span>
+                            <span class="legend-item"><span class="legend-color legend-half-day"></span> Half-Day</span>
+                            <span class="legend-item"><span class="legend-color legend-leave"></span> Approved Leave</span>
+                            <span class="legend-item"><span class="legend-color legend-absent"></span> Absent</span>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/attendance.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('employee');
+        });
+    </script>
+</body>
+</html>

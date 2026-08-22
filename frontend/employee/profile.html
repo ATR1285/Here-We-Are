@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Profile Management</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="profile.html" class="menu-item active">
+                    <i class="fa-solid fa-user"></i>
+                    <span>My Profile</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>My Attendance</span>
+                </a>
+                <a href="leave.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-plus"></i>
+                    <span>Apply for Leave</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>My Salary</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">Employee User</span>
+                    <span class="user-role-mini">Employee</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">My Profile</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">Employee User</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <a href="profile.html"><i class="fa-solid fa-user-gear"></i> My Profile</a>
+                            <hr>
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Profile Body Content -->
+            <main class="content-body">
+                <!-- Profile Header Details Header -->
+                <div class="profile-header-card glass-card">
+                    <div class="profile-cover"></div>
+                    <div class="profile-meta-row">
+                        <div class="profile-avatar-wrapper">
+                            <img src="../assets/avatar-placeholder.svg" alt="Profile Avatar" id="profile-main-avatar">
+                            <label for="avatar-upload" class="avatar-edit-badge" title="Change Avatar">
+                                <i class="fa-solid fa-camera"></i>
+                                <input type="file" id="avatar-upload" accept="image/*" style="display: none;">
+                            </label>
+                        </div>
+                        <div class="profile-title-details">
+                            <h2 id="profile-fullname">John Doe</h2>
+                            <p class="profile-role-tag" id="profile-designation">Software Engineer</p>
+                            <div class="profile-quick-stats">
+                                <span><i class="fa-solid fa-building"></i> <span id="profile-dept">Engineering</span></span>
+                                <span><i class="fa-solid fa-id-badge"></i> <span id="profile-empid">EMP001</span></span>
+                            </div>
+                        </div>
+                        <div class="profile-actions">
+                            <button class="btn btn-secondary" id="btn-edit-toggle">
+                                <i class="fa-solid fa-user-pen"></i> Edit Profile
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabs navigation and content -->
+                <div class="profile-tabs-container">
+                    <!-- Tab Headers -->
+                    <div class="profile-tab-headers glass-card">
+                        <button class="tab-btn active" data-tab="personal">Personal Details</button>
+                        <button class="tab-btn" data-tab="job">Job Info</button>
+                        <button class="tab-btn" data-tab="salary">Salary Structure</button>
+                        <button class="tab-btn" data-tab="documents">Documents</button>
+                        <button class="tab-btn" data-tab="about">About & Hobbies</button>
+                    </div>
+
+                    <!-- Tab Contents -->
+                    <div class="tab-content active" id="tab-personal">
+                        <div class="glass-card profile-details-card">
+                            <h3>Personal Details</h3>
+                            <form id="profile-personal-form" class="details-grid">
+                                <div class="info-group">
+                                    <label for="prof-phone">Phone Number</label>
+                                    <input type="text" id="prof-phone" value="+1 (555) 123-4567" disabled>
+                                </div>
+                                <div class="info-group">
+                                    <label for="prof-email">Personal Email</label>
+                                    <input type="email" id="prof-email" value="john.doe@email.com" disabled>
+                                </div>
+                                <div class="info-group address-group">
+                                    <label for="prof-address">Residential Address</label>
+                                    <textarea id="prof-address" rows="3" disabled>123 Indigo Way, Tech Valley, CA 94025</textarea>
+                                </div>
+                                <div class="info-group">
+                                    <label>Date of Birth</label>
+                                    <span class="static-val" id="static-dob">Oct 12, 1993</span>
+                                </div>
+                                <div class="info-group">
+                                    <label>Gender</label>
+                                    <span class="static-val" id="static-gender">Male</span>
+                                </div>
+                                <div class="profile-form-buttons hidden" id="profile-form-actions">
+                                    <button type="button" class="btn btn-secondary" id="btn-edit-cancel">Cancel</button>
+                                    <button type="submit" class="btn btn-primary" id="btn-edit-save">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-job">
+                        <div class="glass-card profile-details-card">
+                            <h3>Job Information</h3>
+                            <div class="details-grid-static">
+                                <div class="static-info-group">
+                                    <label>Manager / Reporting To</label>
+                                    <span id="job-manager">Priya Mehta (HR Director)</span>
+                                </div>
+                                <div class="static-info-group">
+                                    <label>Employment Type</label>
+                                    <span id="job-type">Full-Time</span>
+                                </div>
+                                <div class="static-info-group">
+                                    <label>Work Location</label>
+                                    <span id="job-location">Head Office (San Francisco)</span>
+                                </div>
+                                <div class="static-info-group">
+                                    <label>Date of Joining</label>
+                                    <span id="job-joining">January 15, 2024</span>
+                                </div>
+                                <div class="static-info-group">
+                                    <label>Employee Status</label>
+                                    <span class="status-pill active-status">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-salary">
+                        <div class="salary-overview-grid">
+                            <!-- Left: Monthly CTC Summary Card -->
+                            <div class="glass-card total-ctc-card">
+                                <span class="ctc-label">Cost to Company (Annual CTC)</span>
+                                <h2 class="ctc-amount" id="salary-total-ctc">$120,000</h2>
+                                <p class="ctc-subtext">Monthly Salary: <strong id="salary-monthly-gross">$10,000</strong></p>
+                                <hr class="divider">
+                                <div class="ctc-note">
+                                    <i class="fa-solid fa-circle-exclamation"></i>
+                                    <span>Payroll structure is display-only for employees. Please contact Admin/HR to make changes.</span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Components Breakdown (Matches Excalidraw Section 2) -->
+                            <div class="salary-components-panel">
+                                <div class="salary-comp-card glass-card">
+                                    <div class="comp-icon"><i class="fa-solid fa-coins"></i></div>
+                                    <div class="comp-details">
+                                        <h4>Basic Salary</h4>
+                                        <p>Core component representing the basic pay structure.</p>
+                                        <span class="comp-value" id="sal-basic">$5,000.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="salary-comp-card glass-card">
+                                    <div class="comp-icon"><i class="fa-solid fa-house-chimney"></i></div>
+                                    <div class="comp-details">
+                                        <h4>House Rent Allowance (HRA)</h4>
+                                        <p>HRA provided to employees to cover home renting expenses.</p>
+                                        <span class="comp-value" id="sal-hra">$2,000.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="salary-comp-card glass-card">
+                                    <div class="comp-icon"><i class="fa-solid fa-wallet"></i></div>
+                                    <div class="comp-details">
+                                        <h4>Standard Allowance</h4>
+                                        <p>A standard allowance is provided to employees as part of salary.</p>
+                                        <span class="comp-value" id="sal-standard">$1,000.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="salary-comp-card glass-card">
+                                    <div class="comp-icon"><i class="fa-solid fa-award"></i></div>
+                                    <div class="comp-details">
+                                        <h4>Performance Bonus</h4>
+                                        <p>Variable bonus calculated based on quarterly deliverables.</p>
+                                        <span class="comp-value" id="sal-bonus">$1,000.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="salary-comp-card glass-card">
+                                    <div class="comp-icon"><i class="fa-solid fa-plane-up"></i></div>
+                                    <div class="comp-details">
+                                        <h4>Leave Travel Allowance (LTA)</h4>
+                                        <p>LTA is paid by the company to assist in travel costs.</p>
+                                        <span class="comp-value" id="sal-lta">$500.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="salary-comp-card glass-card">
+                                    <div class="comp-icon"><i class="fa-solid fa-vault"></i></div>
+                                    <div class="comp-details">
+                                        <h4>Fixed Allowance</h4>
+                                        <p>Fixed allowance portion calculated on miscellaneous costs.</p>
+                                        <span class="comp-value" id="sal-fixed">$500.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-content" id="tab-documents">
+                        <div class="glass-card profile-details-card">
+                            <div class="section-header-row">
+                                <h3>Official Documents</h3>
+                                <button class="btn btn-secondary btn-sm" id="btn-upload-doc">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload Document
+                                </button>
+                            </div>
+                            <div class="documents-list-table" id="documents-table">
+                                <div class="doc-row">
+                                    <div class="doc-info">
+                                        <i class="fa-regular fa-file-pdf pdf-color"></i>
+                                        <div>
+                                            <h4>Appointment Letter.pdf</h4>
+                                            <span>Uploaded on Jan 15, 2024 &bull; 1.4 MB</span>
+                                        </div>
+                                    </div>
+                                    <button class="icon-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                                </div>
+                                <div class="doc-row">
+                                    <div class="doc-info">
+                                        <i class="fa-regular fa-file-pdf pdf-color"></i>
+                                        <div>
+                                            <h4>National_ID_Card.pdf</h4>
+                                            <span>Uploaded on Jan 15, 2024 &bull; 800 KB</span>
+                                        </div>
+                                    </div>
+                                    <button class="icon-btn" title="Download"><i class="fa-solid fa-download"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- About Me, Skills, & Hobbies tab (From Excalidraw Section 2) -->
+                    <div class="tab-content" id="tab-about">
+                        <div class="about-tab-grid">
+                            <!-- Left: Editable About Boxes -->
+                            <div class="about-boxes-panel">
+                                <div class="about-box glass-card">
+                                    <div class="about-box-header">
+                                        <h4>About</h4>
+                                        <i class="fa-solid fa-pencil box-edit-icon" data-field="aboutMe"></i>
+                                    </div>
+                                    <textarea id="aboutMe-textarea" class="about-textarea" disabled></textarea>
+                                </div>
+
+                                <div class="about-box glass-card">
+                                    <div class="about-box-header">
+                                        <h4>What I love about my job</h4>
+                                        <i class="fa-solid fa-pencil box-edit-icon" data-field="loveJob"></i>
+                                    </div>
+                                    <textarea id="loveJob-textarea" class="about-textarea" disabled></textarea>
+                                </div>
+
+                                <div class="about-box glass-card">
+                                    <div class="about-box-header">
+                                        <h4>My interests and hobbies</h4>
+                                        <i class="fa-solid fa-pencil box-edit-icon" data-field="hobbies"></i>
+                                    </div>
+                                    <textarea id="hobbies-textarea" class="about-textarea" disabled></textarea>
+                                </div>
+                            </div>
+
+                            <!-- Right: Add Skills & Certifications panel -->
+                            <div class="skills-certs-panel">
+                                <div class="skills-box glass-card">
+                                    <div class="skills-header">
+                                        <h4>Skills</h4>
+                                        <button class="btn btn-secondary btn-xs" id="btn-add-skill">
+                                            <i class="fa-solid fa-plus"></i> Add Skill
+                                        </button>
+                                    </div>
+                                    <div class="skills-tags-list" id="profile-skills-list">
+                                        <!-- Add Skills rendering -->
+                                    </div>
+                                    <div class="add-skill-form hidden" id="skill-form">
+                                        <input type="text" id="skill-input" placeholder="e.g. JavaScript">
+                                        <button class="btn btn-primary btn-xs" id="btn-save-skill">Save</button>
+                                    </div>
+                                </div>
+
+                                <div class="certs-box glass-card">
+                                    <div class="certs-header">
+                                        <h4>Certifications</h4>
+                                        <button class="btn btn-secondary btn-xs" id="btn-add-cert">
+                                            <i class="fa-solid fa-plus"></i> Add Cert
+                                        </button>
+                                    </div>
+                                    <div class="certs-list-ui" id="profile-certs-list">
+                                        <!-- Certifications list -->
+                                    </div>
+                                    <div class="add-cert-form hidden" id="cert-form">
+                                        <input type="text" id="cert-input" placeholder="e.g. AWS Cloud Practitioner">
+                                        <button class="btn btn-primary btn-xs" id="btn-save-cert">Save</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Upload Document Modal -->
+    <div id="upload-doc-modal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3>Upload New Document</h3>
+                <button class="close-btn" id="close-upload-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="upload-doc-form">
+                    <div class="input-group">
+                        <label for="doc-name">Document Title</label>
+                        <input type="text" id="doc-name" placeholder="e.g. Degree_Certificate.pdf" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="doc-file">Select File</label>
+                        <input type="file" id="doc-file" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">Upload</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('employee');
+        });
+    </script>
+</body>
+</html>

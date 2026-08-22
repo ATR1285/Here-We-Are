@@ -1,0 +1,186 @@
+/* ==========================================================================
+   DAYFLOW HRMS - LEAVE APPLICATIONS & ADMIN APPROVAL WORKFLOWS
+   ========================================================================== */
+
+/* Leave Balance Cards Row */
+.leave-balances-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.balance-card {
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+}
+.bal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.bal-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.bal-header i {
+    font-size: 1.3rem;
+}
+.paid-color { color: var(--success); }
+.sick-color { color: var(--danger); }
+.unpaid-color { color: var(--warning); }
+
+.bal-values {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+}
+.bal-main {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--text-primary);
+}
+.bal-label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+/* Two Column Form & History Layout */
+.leave-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1.2fr;
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.leave-form-card, .leave-history-card {
+    padding: 2rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+}
+.leave-form-card h3, .leave-history-card h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    padding-bottom: 0.8rem;
+}
+
+.days-indicator-box {
+    padding: 0.8rem 1rem;
+    background-color: rgba(79, 70, 229, 0.08);
+    border: 1px solid rgba(79, 70, 229, 0.2);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1.2rem;
+    text-align: center;
+    font-size: 0.85rem;
+}
+.days-indicator-box strong {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+/* Leave Requests History Table */
+.history-list-wrapper {
+    width: 100%;
+}
+.history-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.history-table th {
+    padding: 0.8rem 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-light);
+}
+.history-table td {
+    padding: 0.9rem 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-light);
+}
+.history-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Admin leave approvals views */
+.leave-approvals-tabs-card {
+    padding: 0.6rem;
+    margin-bottom: 1.5rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+}
+.tabs-row {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+}
+
+.approvals-table-card {
+    padding: 1.5rem;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+}
+.approvals-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+}
+.approvals-table th {
+    padding: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    border-bottom: 1px solid var(--border-light);
+}
+.approvals-table td {
+    padding: 1rem;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--border-light);
+}
+.approvals-table tr:last-child td {
+    border-bottom: none;
+}
+.approvals-action-btns {
+    display: flex;
+    gap: 8px;
+}
+.approvals-action-btns button {
+    padding: 0.35rem 0.7rem;
+    font-size: 0.8rem;
+}
+
+/* Decision Modal configuration button colors */
+#btn-decision-submit {
+    margin-top: 15px;
+}
+#btn-decision-submit.approve {
+    background-color: var(--success);
+    color: white;
+}
+#btn-decision-submit.reject {
+    background-color: var(--danger);
+    color: white;
+}
+
+/* Responsiveness */
+@media (max-width: 900px) {
+    .leave-grid-layout {
+        grid-template-columns: 1fr;
+    }
+}

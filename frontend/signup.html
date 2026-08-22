@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow HRMS - Sign Up</title>
+    <meta name="description" content="Register an account on Dayflow HRMS to access employee and manager HR dashboards.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/global.css">
+    <link rel="stylesheet" href="css/auth.css">
+</head>
+<body>
+    <div class="auth-container">
+        <!-- Left Branding Panel -->
+        <div class="auth-brand-panel">
+            <div class="brand-bg-glow"></div>
+            <div class="brand-content">
+                <div class="logo-wrapper">
+                    <i class="fa-solid fa-clock-rotate-left logo-icon"></i>
+                    <span class="logo-text">Dayflow</span>
+                </div>
+                <h1 class="brand-title">Start aligning your<br><span class="highlight">workday today.</span></h1>
+                <p class="brand-subtitle">Join Dayflow HRMS to track daily check-ins, manage your salary profile, and submit leaves seamlessly.</p>
+                <div class="brand-features">
+                    <div class="feature-item">
+                        <i class="fa-solid fa-id-card feature-icon"></i>
+                        <span>Register with official Employee ID</span>
+                    </div>
+                    <div class="feature-item">
+                        <i class="fa-solid fa-circle-check feature-icon"></i>
+                        <span>Immediate login upon email verification</span>
+                    </div>
+                </div>
+            </div>
+            <div class="brand-footer">
+                <span>&copy; 2026 Dayflow HRMS. All rights reserved.</span>
+            </div>
+        </div>
+
+        <!-- Right Form Panel -->
+        <div class="auth-form-panel">
+            <div class="form-wrapper">
+                <div class="form-header">
+                    <h2>Create Account</h2>
+                    <p>Enter your details below to get started</p>
+                </div>
+                
+                <form id="signup-form" class="auth-form">
+                    <div class="input-row-flex">
+                        <div class="input-group">
+                            <label for="signup-empid">Employee ID</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-id-badge field-icon"></i>
+                                <input type="text" id="signup-empid" placeholder="e.g. EMP102" required>
+                            </div>
+                        </div>
+
+                        <div class="input-group">
+                            <label for="signup-role">Role</label>
+                            <div class="input-wrapper">
+                                <i class="fa-solid fa-user-gear field-icon"></i>
+                                <select id="signup-role" required>
+                                    <option value="employee" selected>Employee</option>
+                                    <option value="hr">Admin / HR Officer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signup-name">Full Name</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-user field-icon"></i>
+                            <input type="text" id="signup-name" placeholder="John Doe" required>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signup-email">Email Address</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-envelope field-icon"></i>
+                            <input type="email" id="signup-email" placeholder="name@company.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="input-group">
+                        <label for="signup-password">Password</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock field-icon"></i>
+                            <input type="password" id="signup-password" placeholder="Min. 8 characters" required>
+                            <i class="fa-solid fa-eye-slash toggle-password" id="toggle-signup-pwd"></i>
+                        </div>
+                        <div class="password-strength-bar" id="pwd-strength"></div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="signup-confirm-password">Confirm Password</label>
+                        <div class="input-wrapper">
+                            <i class="fa-solid fa-lock field-icon"></i>
+                            <input type="password" id="signup-confirm-password" placeholder="Confirm password" required>
+                        </div>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary btn-block">
+                        <span>Sign Up</span>
+                        <i class="fa-solid fa-user-plus"></i>
+                    </button>
+                </form>
+                
+                <div class="form-footer">
+                    <p>Already have an account? <a href="index.html">Sign In</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Verification Modal -->
+    <div id="verify-modal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <i class="fa-solid fa-paper-plane modal-icon animate-bounce"></i>
+                <h3>Verify Your Email</h3>
+            </div>
+            <div class="modal-body">
+                <p>We've sent a verification link to <strong id="verify-email-text">user@company.com</strong>. Please check your inbox and click the verification button to activate your account.</p>
+                <div class="verification-simulation-box">
+                    <p class="sim-note"><i class="fa-solid fa-wand-magic-sparkles"></i> <strong>Hackathon Mode:</strong> You can simulate verification success below to complete signup instantly.</p>
+                    <button class="btn btn-success" id="btn-simulate-verify">Verify Email Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="js/data.js"></script>
+    <script src="js/auth.js"></script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Admin Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item active">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="employees.html" class="menu-item">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Employees</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Attendance Records</span>
+                </a>
+                <a href="leave-approvals.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Leave Approvals</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Payroll Control</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">HR Admin</span>
+                    <span class="user-role-mini">Admin / HR</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Admin Dashboard</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Switch View Dropdown -->
+                    <div class="switch-employee-view">
+                        <label for="admin-switch-employee">View As Employee:</label>
+                        <select id="admin-switch-employee">
+                            <option value="">-- Switch View --</option>
+                            <!-- Options filled dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">HR Admin</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Body Content -->
+            <main class="content-body">
+                <!-- Welcome Banner -->
+                <div class="welcome-banner glass-card">
+                    <div class="welcome-text">
+                        <h2 id="greeting-title">Good morning, HR Admin!</h2>
+                        <p>Here is your company dashboard overview metrics.</p>
+                    </div>
+                    <div class="live-clock-card">
+                        <span id="live-time">10:48:44 AM</span>
+                        <span id="live-date">Saturday, August 22, 2026</span>
+                    </div>
+                </div>
+
+                <!-- Admin Metrics Stats Grid -->
+                <div class="dashboard-stats-grid">
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon employees">
+                            <i class="fa-solid fa-users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Total Employees</span>
+                            <h3 class="stat-value" id="stat-total-emp">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon present">
+                            <i class="fa-solid fa-user-check"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Present Today</span>
+                            <h3 class="stat-value" id="stat-present-today">0</h3>
+                        </div>
+                    </div>
+
+                    <div class="stat-card glass-card">
+                        <div class="stat-icon leave">
+                            <i class="fa-solid fa-plane-departure"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-label">Leaves Pending</span>
+                            <h3 class="stat-value" id="stat-leaves-pending">0</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Two Column Admin Details -->
+                <div class="dashboard-details-grid admin-grid">
+                    <!-- Employees Overview Table -->
+                    <div class="detail-section glass-card table-section">
+                        <div class="section-header">
+                            <h2>Employees Attendance Overview</h2>
+                            <a href="attendance.html" class="btn btn-secondary btn-xs">View All Logs</a>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="dashboard-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Role</th>
+                                        <th>Today Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="admin-emp-overview-tbody">
+                                    <!-- Rendered dynamically -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Quick Leave Approvals Widget -->
+                    <div class="detail-section glass-card">
+                        <div class="section-header">
+                            <h2>Recent Leave Requests</h2>
+                            <a href="leave-approvals.html" class="btn btn-secondary btn-xs">Manage All</a>
+                        </div>
+                        <div class="quick-leaves-list" id="quick-leaves-list">
+                            <p class="empty-state-text">No pending leave requests.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/dashboard.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('admin');
+        });
+    </script>
+</body>
+</html>

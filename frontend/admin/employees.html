@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dayflow - Employee Directory</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="../css/global.css">
+    <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body>
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar" id="sidebar-container">
+            <div class="sidebar-brand">
+                <i class="fa-solid fa-clock-rotate-left brand-icon"></i>
+                <span class="brand-name">Dayflow</span>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <a href="dashboard.html" class="menu-item">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="employees.html" class="menu-item active">
+                    <i class="fa-solid fa-users"></i>
+                    <span>Employees</span>
+                </a>
+                <a href="attendance.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-days"></i>
+                    <span>Attendance Records</span>
+                </a>
+                <a href="leave-approvals.html" class="menu-item">
+                    <i class="fa-solid fa-calendar-check"></i>
+                    <span>Leave Approvals</span>
+                </a>
+                <a href="payroll.html" class="menu-item">
+                    <i class="fa-solid fa-file-invoice-dollar"></i>
+                    <span>Payroll Control</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-user">
+                <div class="user-avatar-mini" id="sidebar-avatar">
+                    <img src="../assets/avatar-placeholder.svg" alt="Profile" id="sidebar-avatar-img">
+                </div>
+                <div class="user-details-mini">
+                    <span class="user-name-mini" id="sidebar-user-name">HR Admin</span>
+                    <span class="user-role-mini">Admin / HR</span>
+                </div>
+                <button class="btn-logout-mini" id="btn-sidebar-logout" title="Log Out">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Wrapper -->
+        <div class="main-wrapper">
+            <!-- Topbar Header -->
+            <header class="topbar">
+                <div class="topbar-left">
+                    <button class="sidebar-toggle" id="btn-sidebar-toggle">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    <h1 class="page-title">Employee Directory</h1>
+                </div>
+                <div class="topbar-right">
+                    <!-- Switch View Dropdown -->
+                    <div class="switch-employee-view">
+                        <label for="admin-switch-employee">View As Employee:</label>
+                        <select id="admin-switch-employee">
+                            <option value="">-- Switch View --</option>
+                            <!-- Options filled dynamically -->
+                        </select>
+                    </div>
+
+                    <!-- Notification Bell -->
+                    <div class="notification-dropdown">
+                        <button class="icon-btn" id="btn-notifications">
+                            <i class="fa-solid fa-bell"></i>
+                            <span class="badge" id="notif-badge">0</span>
+                        </button>
+                        <div class="notif-menu glass-card" id="notif-menu">
+                            <div class="notif-header">
+                                <h3>Notifications</h3>
+                                <button id="btn-clear-notif">Clear all</button>
+                            </div>
+                            <div class="notif-list" id="notif-list">
+                                <p class="empty-notif">No new notifications</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="profile-menu-container">
+                        <button class="profile-trigger" id="btn-profile-trigger">
+                            <span class="profile-name" id="topbar-user-name">HR Admin</span>
+                            <div class="user-avatar-mini">
+                                <img src="../assets/avatar-placeholder.svg" alt="Profile" id="topbar-avatar-img">
+                            </div>
+                            <i class="fa-solid fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu glass-card" id="profile-dropdown">
+                            <button id="btn-topbar-logout" class="dropdown-logout-btn"><i class="fa-solid fa-right-from-bracket"></i> Log Out</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Main Body Content -->
+            <main class="content-body">
+                <!-- Controls Row -->
+                <div class="directory-control-bar glass-card">
+                    <div class="control-left">
+                        <div class="search-box-wrapper">
+                            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                            <input type="text" id="employee-search" placeholder="Search by name, ID, email...">
+                        </div>
+                        <div class="filter-box-wrapper">
+                            <label for="dept-filter">Department:</label>
+                            <select id="dept-filter">
+                                <option value="">All Departments</option>
+                                <option value="Engineering">Engineering</option>
+                                <option value="Design">Design</option>
+                                <option value="Marketing">Marketing</option>
+                                <option value="HR">HR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" id="btn-add-employee">
+                        <i class="fa-solid fa-user-plus"></i> Add Employee
+                    </button>
+                </div>
+
+                <!-- Directory Grid Table -->
+                <div class="glass-card directory-table-card">
+                    <div class="table-responsive">
+                        <table class="directory-table">
+                            <thead>
+                                <tr>
+                                    <th>Employee</th>
+                                    <th>ID</th>
+                                    <th>Department</th>
+                                    <th>Role</th>
+                                    <th>Joining Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="directory-tbody">
+                                <!-- Filled dynamically by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Add Employee Modal Form -->
+    <div id="add-employee-modal" class="modal">
+        <div class="modal-content glass-card">
+            <div class="modal-header">
+                <h3>Add New Employee</h3>
+                <button class="close-btn" id="close-add-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="add-employee-form" class="modal-form-grid">
+                    <div class="input-group">
+                        <label for="new-empid">Employee ID</label>
+                        <input type="text" id="new-empid" placeholder="e.g. EMP005" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-name">Full Name</label>
+                        <input type="text" id="new-name" placeholder="John Doe" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-email">Email Address</label>
+                        <input type="email" id="new-email" placeholder="john@company.com" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-role">Role Group</label>
+                        <select id="new-role" required>
+                            <option value="employee" selected>Employee</option>
+                            <option value="hr">Admin / HR Officer</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-dept">Department</label>
+                        <select id="new-dept" required>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Design">Design</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="HR">HR</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-designation">Designation Title</label>
+                        <input type="text" id="new-designation" placeholder="e.g. Frontend Engineer" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-joining">Date of Joining</label>
+                        <input type="date" id="new-joining" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="new-salary">Annual CTC ($)</label>
+                        <input type="number" id="new-salary" placeholder="e.g. 90000" min="0" required>
+                    </div>
+
+                    <div class="form-actions-full">
+                        <button type="submit" class="btn btn-primary btn-block">Create Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Scripts -->
+    <script src="../js/data.js"></script>
+    <script src="../js/auth.js"></script>
+    <script src="../js/components.js"></script>
+    <script src="../js/profile.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            Auth.guardRoute('admin');
+        });
+    </script>
+</body>
+</html>
