@@ -28,10 +28,35 @@ def process_payroll(db: Session, employee_id: str, month: int, year: int, proces
     if not structure:
         raise HTTPException(status_code=404, detail="No active salary structure found for employee")
         
-    # In a full implementation, these would be derived from actual Attendance / Leave data.
-    # For Phase 5 scope, we assume fixed variables to satisfy integration constraint mechanics.
+    from sqlalchemy import extract
+    from app.db.models.attendance import AttendanceRecord
+    from app.db.models.leave import LeaveRequest, LeaveStatus
+    
+    # 2. Derive actual Attendance and Leave data
     scheduled_working_days = 22
-    lop_days = 2
+    
+    attendances = db.query(AttendanceRecord).filter(
+        AttendanceRecord.employee_id == employee_id,
+        extract('month', AttendanceRecord.check_in_at) == month,
+        extract('year', AttendanceRecord.check_in_at) == year
+    ).count()
+    
+    approved_leaves_total = 0
+    # A rough aggregation for the month
+    leaves = db.query(LeaveRequest).filter(
+        LeaveRequest.employee_id == employee_id,
+        LeaveRequest.status == LeaveStatus.APPROVED
+    ).all()
+    for l in leaves:
+        start_month = datetime.strptime(l.start_date, "%Y-%m-%d").month
+        start_year = datetime.strptime(l.start_date, "%Y-%m-%d").year
+        if start_month == month and start_year == year:
+            approved_leaves_total += l.requested_days
+            
+    worked_days = attendances
+    lop_days = scheduled_working_days - worked_days - approved_leaves_total
+    if lop_days < 0:
+        lop_days = 0
     
     lop_deduction = PayrollRulesEngine.calculate_lop_deduction(
         gross_salary=structure.gross_salary,

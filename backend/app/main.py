@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.core.logging import setup_logging
-from app.api import health, auth, organization, employees, attendance, leave, payroll
+from app.api import health, auth, organization, employees, attendance, leave, payroll, performance, recruitment, separation, expense
 
 setup_logging()
 
@@ -26,6 +26,10 @@ app.include_router(employees.router, prefix=f"{settings.API_V1_STR}/employees", 
 app.include_router(attendance.router, prefix=f"{settings.API_V1_STR}/attendance", tags=["Attendance"])
 app.include_router(leave.router, prefix=f"{settings.API_V1_STR}/leave", tags=["Leave"])
 app.include_router(payroll.router, prefix=f"{settings.API_V1_STR}/payroll", tags=["Payroll"])
+app.include_router(performance.router, prefix=f"{settings.API_V1_STR}/performance", tags=["Performance"])
+app.include_router(recruitment.router, prefix=f"{settings.API_V1_STR}/recruitment", tags=["Recruitment"])
+app.include_router(separation.router, prefix=f"{settings.API_V1_STR}/separation", tags=["Separation"])
+app.include_router(expense.router, prefix=f"{settings.API_V1_STR}/expense", tags=["Expense"])
 
 @app.get("/")
 def root():

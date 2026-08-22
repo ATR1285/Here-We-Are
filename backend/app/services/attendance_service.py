@@ -6,10 +6,20 @@ from app.db.models.employee import Employee
 from app.db.models.audit import AuditLog
 from app.rules.attendance_rules import AttendanceRulesEngine
 
+from sqlalchemy.exc import IntegrityError
+
 def check_in(db: Session, employee: Employee) -> AttendanceRecord:
     today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     
-    # Check if already checked in
+    # Block if they have an active open shift (for overnight safety)
+    open_shift = db.query(AttendanceRecord).filter(
+        AttendanceRecord.employee_id == employee.id,
+        AttendanceRecord.check_out_at == None
+    ).first()
+    if open_shift:
+        raise HTTPException(status_code=409, detail="You have an active open check-in. Please check out first.")
+    
+    # Check if already checked in for today
     existing = db.query(AttendanceRecord).filter(
         AttendanceRecord.employee_id == employee.id,
         AttendanceRecord.attendance_date == today_str
@@ -36,22 +46,25 @@ def check_in(db: Session, employee: Employee) -> AttendanceRecord:
         timestamp=now
     )
     db.add(audit)
-    db.commit()
-    db.refresh(record)
+    
+    try:
+        db.commit()
+        db.refresh(record)
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Concurrent check-in detected")
+        
     return record
 
 def check_out(db: Session, employee: Employee) -> AttendanceRecord:
-    today_str = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    
+    # Find the active open shift (solves overnight crossing boundary)
     record = db.query(AttendanceRecord).filter(
         AttendanceRecord.employee_id == employee.id,
-        AttendanceRecord.attendance_date == today_str
-    ).first()
+        AttendanceRecord.check_out_at == None
+    ).order_by(AttendanceRecord.check_in_at.desc()).first()
     
     if not record:
-        raise HTTPException(status_code=404, detail="No check-in record found for today")
-    if record.check_out_at:
-        raise HTTPException(status_code=409, detail="Already checked out for today")
+        raise HTTPException(status_code=404, detail="No active check-in record found to check out from")
         
     now = datetime.now(timezone.utc)
     record.check_out_at = now

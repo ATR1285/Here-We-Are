@@ -24,13 +24,37 @@ class LeaveRulesEngine:
         working_days = 0
         current = start
         
-        # Determine valid weekdays based on typical "Monday-Friday" pattern
+        # Determine valid weekdays
         # Default is standard workweek (0=Monday, 4=Friday)
-        valid_weekdays = [0, 1, 2, 3, 4] 
+        valid_weekdays = set([0, 1, 2, 3, 4])
+        
+        day_map = {
+            "monday": 0, "tuesday": 1, "wednesday": 2, 
+            "thursday": 3, "friday": 4, "saturday": 5, "sunday": 6
+        }
+        
         if schedule and schedule.working_days:
-            # Note: A real implementation would parse 'Monday-Friday' more robustly.
-            # Assuming standard M-F for now as per prompt constraints.
-            pass
+            s_str = schedule.working_days.lower().strip()
+            parsed_days = set()
+            for part in s_str.split(","):
+                part = part.strip()
+                if "-" in part:
+                    s_day, e_day = part.split("-")
+                    s_day, e_day = s_day.strip(), e_day.strip()
+                    if s_day in day_map and e_day in day_map:
+                        start_idx = day_map[s_day]
+                        end_idx = day_map[e_day]
+                        if start_idx <= end_idx:
+                            parsed_days.update(range(start_idx, end_idx + 1))
+                        else:
+                            # e.g., Sunday-Monday
+                            parsed_days.update(range(start_idx, 7))
+                            parsed_days.update(range(0, end_idx + 1))
+                else:
+                    if part in day_map:
+                        parsed_days.add(day_map[part])
+            if parsed_days:
+                valid_weekdays = parsed_days
             
         while current <= end:
             if current.weekday() in valid_weekdays:
